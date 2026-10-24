@@ -17,6 +17,10 @@ Item {
         property real density: Math.max(1, panelWidth / 600)
         width: surface.width * density; height: surface.height * density
         scale: 1 / density; transformOrigin: Item.TopLeft
+        // A surface can finish sizing while its dialog is hidden.
+        onVisibleChanged: if (visible) requestPaint()
+        onAvailableChanged: if (available) requestPaint()
+        onDensityChanged: requestPaint()
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
         onPaint: {
