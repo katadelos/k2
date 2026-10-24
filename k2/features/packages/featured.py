@@ -3,7 +3,6 @@
 import json
 import os
 import re
-import shlex
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from urllib.parse import urljoin, urlsplit
@@ -29,7 +28,9 @@ from PyQt5.QtNetwork import (
     QSslConfiguration,
 )
 
-PRIMARY_FEEDS = frozenset({"kindle5", "kindlepw2", "kindlehf", "kobo", "kobov4"})
+DEFAULT_CATALOG_URL = (
+    "https://raw.githubusercontent.com/katadelos/k2/main/feed/featured/index.json"
+)
 MAX_CATALOG_BYTES = 128 * 1024
 MAX_IMAGE_BYTES = 2 * 1024 * 1024
 MAX_ITEMS = 20
@@ -50,30 +51,9 @@ def _origin(url):
     )
 
 
-def catalog_url(config_dir=None):
-    """Use an explicit URL or the shared root of the primary opkg feed."""
-    override = os.environ.get("K2_FEATURED_URL")
-    if override is not None:
-        return override.strip()
-    if config_dir is None:
-        return ""
-    for config in sorted(Path(config_dir).glob("*.conf")):
-        try:
-            lines = config.read_text().splitlines()
-        except OSError:
-            continue
-        for line in lines:
-            try:
-                fields = shlex.split(line, comments=True)
-            except ValueError:
-                continue
-            if (
-                len(fields) == 3
-                and fields[0] in {"src", "src/gz"}
-                and fields[1] in PRIMARY_FEEDS
-            ):
-                return urljoin(fields[2].rstrip("/") + "/", "../featured/index.json")
-    return ""
+def catalog_url():
+    """Use the public K2 catalogue unless an explicit URL is configured."""
+    return os.environ.get("K2_FEATURED_URL", DEFAULT_CATALOG_URL).strip()
 
 
 def _text(value, field, limit, *, optional=False):

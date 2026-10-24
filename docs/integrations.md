@@ -107,14 +107,10 @@ does not add a new type of interface. See the
 
 ## Featured catalogue
 
-App Store reads Featured content from the base of its configured primary opkg
-feed. A feed at `https://example.org/packages/kindlehf` uses
-`https://example.org/packages/featured/index.json`.
+App Store reads Featured content from the
+[public K2 catalogue](https://raw.githubusercontent.com/katadelos/k2/main/feed/featured/index.json).
+The catalogue and artwork live in [`feed/featured/`](../feed/featured/).
 
-Discovery recognises opkg source names `kindle5`, `kindlepw2`, `kindlehf`, `kobo`,
-and `kobov4`. For a feed with another source name, set `K2_FEATURED_URL` explicitly.
-
-Serve the contents of [`feed/featured/`](../feed/featured/) at that location.
 Editing the JSON changes the cards without rebuilding K2. The refresh button
 reloads both Featured and the package lists; returning to Featured also reloads
 its content.
@@ -177,6 +173,6 @@ In another terminal, open the simulator with an explicit Featured URL:
 K2_FEATURED_URL=http://127.0.0.1:8096/featured/index.json uv run k2-sim --page apps --watch
 ```
 
-`K2_FEATURED_URL` accepts an HTTP or HTTPS JSON URL and overrides discovery from
-opkg configuration. URLs cannot contain credentials. Validation is implemented
+`K2_FEATURED_URL` accepts an HTTP or HTTPS JSON URL and overrides the
+public K2 catalogue. URLs cannot contain credentials. Validation is implemented
 in [`featured.py`](../k2/features/packages/featured.py).

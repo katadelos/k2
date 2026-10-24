@@ -49,7 +49,7 @@ def compose(
     navigation = Navigation()
     operations = Operations()
     confirmations = Confirmations(operations)
-    featured = FeaturedCatalog(catalog_url(backend.config_dir))
+    featured = FeaturedCatalog(catalog_url())
     packages = PackagesViewModel(
         backend,
         applications,
