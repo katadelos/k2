@@ -1,0 +1,13 @@
+module k2.ui.components
+singleton Theme 1.0 Theme.qml
+InfoRow 1.0 InfoRow.qml
+KBadge 1.0 KBadge.qml
+KButton 1.0 KButton.qml
+KIcon 1.0 KIcon.qml
+KMenuRow 1.0 KMenuRow.qml
+KSurface 1.0 KSurface.qml
+KSwitch 1.0 KSwitch.qml
+KTabBar 1.0 KTabBar.qml
+KText 1.0 KText.qml
+OnScreenKeyboard 1.0 OnScreenKeyboard.qml
+PageHeading 1.0 PageHeading.qml

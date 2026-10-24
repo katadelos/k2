@@ -1,0 +1,17 @@
+#!/bin/sh
+# Launch independently of a short-lived KPP command request.
+set -eu
+jobs=/var/run/kppmods-upstart
+if [ ! -f "$jobs/.kppmods" ] || [ "$(stat -c '%d:%i' "$jobs")" != "$(stat -c '%d:%i' /etc/upstart)" ]; then
+    echo 'KPP Mods runtime service overlay is unavailable.' >&2
+    exit 1
+fi
+source=/var/run/eink-sdk/usr/share/k2/integration/k2-developer-tools.conf
+if ! cmp -s "$source" "$jobs/k2-developer-tools.conf"; then
+    cp "$source" "$jobs/.k2-developer-tools.conf.tmp"
+    mv "$jobs/.k2-developer-tools.conf.tmp" "$jobs/k2-developer-tools.conf"
+    initctl reload-configuration
+fi
+if ! initctl status k2-developer-tools | grep -q start/running; then
+    initctl start k2-developer-tools
+fi

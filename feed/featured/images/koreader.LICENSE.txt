@@ -1,0 +1,15 @@
+Custom icons created for KOReader project, licensed under:
+
+http://creativecommons.org/licenses/by/3.0/ *
+
+Use it anyway you want as long as this license is included in the source or
+binary distribution.
+
+Creator
+- Qingping Hou (@houqp)
+
+KOReader logo, unmodified, from:
+https://github.com/koreader/koreader/blob/master/resources/koreader.png
+
+Upstream artwork and license:
+https://github.com/koreader/koreader-icons

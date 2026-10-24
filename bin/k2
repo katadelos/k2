@@ -1,0 +1,48 @@
+#!/bin/sh
+# Device launcher. The package payload lives on userstore; links live in RAM.
+set -eu
+if [ -d /mnt/onboard/.eink-sdk ]; then
+    family=kobo
+    store=/mnt/onboard/.eink-sdk
+elif [ -d /mnt/us/.eink-sdk ]; then
+    family=kindle
+    store=/mnt/us/.eink-sdk
+else
+    echo 'Install the SDK bootstrap before launching k2.' >&2
+    exit 1
+fi
+control=$store/control
+runtime=/var/run/eink-sdk
+[ -f "$runtime/.active" ] || sh "$control/activate"
+. "$control/env"
+export EREADER_HAL_LIBRARY="$runtime/usr/lib/libereader-hal.so"
+export PYTHONHOME="$runtime/usr"
+export PYTHONPATH="$store/usr/share/k2"
+export QT_PLUGIN_PATH="$runtime/usr/lib/qt/plugins"
+export QT_QPA_PLATFORM_PLUGIN_PATH="$QT_PLUGIN_PATH/platforms"
+export QML2_IMPORT_PATH="$store/usr/qml"
+export QT_QPA_FONTDIR="$runtime/usr/share/fonts/dejavu"
+# Some ABI profiles use the stock fontconfig provider and its configuration.
+if [ -f "$runtime/etc/fonts/fonts.conf" ]; then
+    export FONTCONFIG_PATH="$runtime/etc/fonts"
+    export FONTCONFIG_FILE="$FONTCONFIG_PATH/fonts.conf"
+else
+    unset FONTCONFIG_PATH FONTCONFIG_FILE
+fi
+export QT_QUICK_BACKEND=software
+# IPKs have reproducible timestamps; do not reuse stale compiled QML on upgrades.
+export QML_DISABLE_DISK_CACHE=1
+export QT_QUICK_CONTROLS_STYLE=Default
+export XDG_CACHE_HOME="$store/cache"
+unset LD_LIBRARY_PATH
+
+if [ "$family" = kindle ]; then
+    export DISPLAY=:0
+    export QT_QPA_PLATFORM=xcb
+    exec "$runtime/usr/bin/python3" -m k2.adapters.session kindle "$@"
+fi
+
+# The native bridge lends the display while Nickel keeps managing the radio.
+export QT_QPA_PLATFORM=kobo
+export QT_QPA_FB_HIDECURSOR=1
+exec "$runtime/usr/bin/python3" -m k2.adapters.session kobo "$@"

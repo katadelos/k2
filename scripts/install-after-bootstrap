@@ -1,0 +1,15 @@
+#!/bin/sh
+# Install k2 from the feed already selected by the SDK bootstrap.
+set -eu
+[ "$(id -u)" = 0 ] || { echo 'Run as root after installing the SDK bootstrap.' >&2; exit 1; }
+if [ -f /mnt/onboard/.eink-sdk/control/run ]; then
+    runner=/mnt/onboard/.eink-sdk/control/run
+elif [ -f /mnt/us/.eink-sdk/control/run ]; then
+    runner=/mnt/us/.eink-sdk/control/run
+else
+    echo 'Install the device SDK bootstrap first.' >&2
+    exit 1
+fi
+sh "$runner" opkg update
+sh "$runner" opkg upgrade opkg
+exec sh "$runner" opkg install k2

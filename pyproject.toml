@@ -1,0 +1,136 @@
+[project]
+name = "k2"
+version = "0.2.0"
+description = "Package and system manager for Kindle and Kobo"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = ["PyQt5==5.15.11", "eboard==0.1.1", "certifi==2026.4.22", "ereader-hal==0.4.0"]
+
+[project.scripts]
+k2 = "k2.app.device_main:main"
+k2-sim = "k2.simulator.main:main"
+
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+namespaces = false
+include = ["k2", "k2.*"]
+
+[tool.setuptools.package-data]
+"*" = ["qml/*.qml", "shell/*.qml", "components/*.qml", "components/qmldir", "assets/*.png", "assets/*.svg", "assets/fonts/*.otf", "assets/fonts/*.ttf"]
+
+[tool.uv.sources]
+ereader-hal = { git = "ssh://git@github.com/katadelos/ereader-hal-priv.git", rev = "2cca350d990c36d473733d8ec2e7fe26583186d0", subdirectory = "python" }
+eboard = { git = "ssh://git@github.com/katadelos/eboard.git", tag = "v0.1.1" }
+
+[dependency-groups]
+dev = [
+    "import-linter==2.15",
+    "mypy==2.4.0",
+    "pre-commit==4.7.0",
+    "ruff==0.17.2",
+]
+
+[tool.ruff]
+required-version = "==0.17.2"
+target-version = "py314"
+line-length = 88
+extend-exclude = [".local", "build"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "A", "C4", "C90", "ISC", "PIE", "PLE", "RET", "RUF", "S", "SIM", "PGH"]
+# UI copy and comments intentionally use typographic punctuation.
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.mypy]
+python_version = "3.14"
+files = ["k2"]
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+no_implicit_reexport = true
+
+# Qt ships incomplete descriptors and overloaded signal stubs. Check application
+# code while treating this native binding as an external boundary.
+[[tool.mypy.overrides]]
+module = ["PyQt5.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
+follow_imports_for_stubs = true
+
+[[tool.mypy.overrides]]
+module = ["eboard", "ereader_hal"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = [
+    "k2.core.*",
+    "k2.app.bootstrap",
+    "k2.app.device_main",
+    "k2.app.shell",
+    "k2.adapters.device",
+    "k2.adapters.hardware",
+    "k2.adapters.kindle",
+    "k2.adapters.kobo",
+    "k2.adapters.launcher",
+    "k2.adapters.opkg.*",
+    "k2.features.*.routes",
+    "k2.features.device.viewmodel",
+    "k2.features.file_sharing.ports",
+    "k2.features.file_sharing.service",
+    "k2.features.files.moves",
+    "k2.features.koreader.actions",
+    "k2.features.koreader.transactions",
+    "k2.features.packages.browsing",
+    "k2.features.packages.review",
+    "k2.features.packages.service",
+    "k2.features.remote_access.kpp_status",
+    "k2.features.remote_access.kpp_tools",
+    "k2.features.remote_access.service",
+    "k2.simulator.bootstrap",
+    "k2.simulator.console",
+    "k2.simulator.state",
+    "k2.simulator.backends.device",
+    "k2.simulator.backends.packages",
+    "k2.simulator.backends.file_sharing",
+    "k2.ui.runtime",
+    "k2.ui.tasks",
+]
+disallow_untyped_defs = true
+disallow_any_generics = true
+
+[tool.importlinter]
+root_package = "k2"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Core contracts have no application, device or Qt dependencies"
+type = "forbidden"
+source_modules = ["k2.core"]
+forbidden_modules = ["k2.app", "k2.adapters", "k2.features", "k2.simulator", "k2.ui", "PyQt5"]
+
+[[tool.importlinter.contracts]]
+name = "Features do not depend on application wiring or simulation"
+type = "forbidden"
+source_modules = ["k2.features"]
+forbidden_modules = ["k2.app", "k2.simulator"]
+
+[[tool.importlinter.contracts]]
+name = "Device adapters do not depend on feature or UI implementations"
+type = "forbidden"
+source_modules = ["k2.adapters"]
+forbidden_modules = ["k2.app", "k2.features", "k2.simulator", "k2.ui"]
+
+[[tool.importlinter.contracts]]
+name = "Shared UI infrastructure does not depend on application features"
+type = "forbidden"
+source_modules = ["k2.ui"]
+forbidden_modules = ["k2.app", "k2.adapters", "k2.features", "k2.simulator"]

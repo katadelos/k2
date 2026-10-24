@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "items": [
+    {
+      "id": "koreader",
+      "width": "full",
+      "title": "KOReader",
+      "description": "Read EPUBs, PDFs and comics. Adjust fonts, margins and page layout.",
+      "image": "images/koreader.png",
+      "action": {
+        "label": "View KOReader",
+        "route": "koreader"
+      }
+    },
+    {
+      "id": "supernet",
+      "width": "half",
+      "title": "Supernet",
+      "description": "Connect to your reader over SSH using USB or Wi-Fi. Manage remote access from k2.",
+      "action": {
+        "label": "View Supernet",
+        "package": "supernet"
+      }
+    }
+  ]
+}

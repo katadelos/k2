@@ -1,0 +1,9 @@
+.venv/
+.local/
+*.egg-info/
+__pycache__/
+build/
+dist/
+.ruff_cache/
+.mypy_cache/
+.import_linter_cache/

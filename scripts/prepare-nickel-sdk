@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Nickel's in-process bridge must use firmware Qt, not the application's Qt.
+set -euo pipefail
+root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+destination=${1:-$root/output/k2-native/sdk}
+mkdir -p "$destination"
+docker run --rm --platform linux/amd64 --entrypoint tar \
+    ghcr.io/pgaskin/nickeltc:1 \
+    -C /tc/arm-nickel-linux-gnueabihf -cf - . | tar -xf - -C "$destination"
+echo "Nickel SDK: $destination"

@@ -1,0 +1,70 @@
+minimum_pre_commit_version: "4.7.0"
+default_stages: [pre-commit]
+default_language_version:
+  python: python3.14
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=5120]
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+        # The packaged Kindle launcher is invoked with sh.
+        exclude: ^integration/k2\.sh$
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=no]
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Python lint, complexity and security
+        entry: ruff check k2
+        language: python
+        language_version: python3.14
+        additional_dependencies: &quality-tools
+          - ruff==0.17.2
+          - mypy==2.4.0
+          - import-linter==2.15
+          - certifi==2026.4.22
+        files: '(^(k2/.*\.py|pyproject\.toml|\.pre-commit-config\.yaml)$)'
+        pass_filenames: false
+      - id: ruff-format
+        name: Python formatting
+        entry: ruff format --check k2
+        language: python
+        language_version: python3.14
+        additional_dependencies: *quality-tools
+        files: '(^(k2/.*\.py|pyproject\.toml|\.pre-commit-config\.yaml)$)'
+        pass_filenames: false
+      - id: mypy
+        name: Python type contracts
+        entry: mypy --config-file=pyproject.toml
+        language: python
+        language_version: python3.14
+        additional_dependencies: *quality-tools
+        files: '(^(k2/.*\.py|pyproject\.toml|\.pre-commit-config\.yaml)$)'
+        pass_filenames: false
+      - id: import-linter
+        name: Python architecture boundaries
+        entry: lint-imports --config=pyproject.toml
+        language: python
+        language_version: python3.14
+        additional_dependencies: *quality-tools
+        files: '(^(k2/.*\.py|pyproject\.toml|\.pre-commit-config\.yaml)$)'
+        pass_filenames: false
