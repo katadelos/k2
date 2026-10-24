@@ -91,7 +91,7 @@ install_k2() {
     message 'Installing k2...' 'This can take a few minutes.'
     /bin/sh "$runner" opkg install k2
     /bin/sh "$runner" opkg status k2 > "$work/k2-status"
-    grep -q '^Status: [^ ]* ok installed$' "$work/k2-status" ||
+    grep -q '^Status: install [^ ]* installed$' "$work/k2-status" ||
         fail 'k2 installation is incomplete.' 'See k2-install.log over USB, then retry.'
     [ -s "$launcher" ] && cmp -s "$launcher" "$store/usr/share/k2/integration/k2.sh" ||
         fail 'The k2 library shortcut is missing.' 'See k2-install.log over USB, then retry.'
@@ -100,4 +100,5 @@ install_k2() {
 
 message 'Starting installation...' 'Keep Wi-Fi connected.'
 install_k2 > "$log" 2>&1
+lipc-set-prop com.lab126.scanner doFullScan 1 2>/dev/null || true
 message 'k2 is installed.' 'Open k2 from your library.'
