@@ -108,8 +108,8 @@ wheels = [
 
 [[package]]
 name = "eboard"
-version = "0.1.1"
-source = { git = "ssh://git@github.com/katadelos/eboard.git?tag=v0.1.1#6e9810bf4e40fe91e390de2002c5dd1b6c10b82a" }
+version = "0.1.2"
+source = { git = "ssh://git@github.com/katadelos/eboard.git?rev=d905ef8b153c4ecd93a5441cc3c9947ebe568b47#d905ef8b153c4ecd93a5441cc3c9947ebe568b47" }
 dependencies = [
     { name = "pyqt5" },
 ]
@@ -224,7 +224,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "certifi", specifier = "==2026.4.22" },
-    { name = "eboard", git = "ssh://git@github.com/katadelos/eboard.git?tag=v0.1.1" },
+    { name = "eboard", git = "ssh://git@github.com/katadelos/eboard.git?rev=d905ef8b153c4ecd93a5441cc3c9947ebe568b47" },
     { name = "ereader-hal", git = "ssh://git@github.com/katadelos/ereader-hal-priv.git?subdirectory=python&rev=2cca350d990c36d473733d8ec2e7fe26583186d0" },
     { name = "pyqt5", specifier = "==5.15.11" },
 ]

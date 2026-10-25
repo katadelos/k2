@@ -5,7 +5,7 @@ description = "Package and system manager for Kindle and Kobo"
 requires-python = ">=3.14"
 license = "MIT"
 license-files = ["LICENSE"]
-dependencies = ["PyQt5==5.15.11", "eboard==0.1.1", "certifi==2026.4.22", "ereader-hal==0.4.0"]
+dependencies = ["PyQt5==5.15.11", "eboard==0.1.2", "certifi==2026.4.22", "ereader-hal==0.4.0"]
 
 [project.scripts]
 k2 = "k2.app.device_main:main"
@@ -24,7 +24,7 @@ include = ["k2", "k2.*"]
 
 [tool.uv.sources]
 ereader-hal = { git = "ssh://git@github.com/katadelos/ereader-hal-priv.git", rev = "2cca350d990c36d473733d8ec2e7fe26583186d0", subdirectory = "python" }
-eboard = { git = "ssh://git@github.com/katadelos/eboard.git", tag = "v0.1.1" }
+eboard = { git = "ssh://git@github.com/katadelos/eboard.git", rev = "d905ef8b153c4ecd93a5441cc3c9947ebe568b47" }
 
 [dependency-groups]
 dev = [
