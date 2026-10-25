@@ -112,6 +112,23 @@ Item {
                         Accessible.name: "Dark mode"
                     }
                 }
+                Item {
+                    visible: deviceFamily === "kindle"
+                    width: parent.width; height: 44
+                    KIcon { name: "fullscreen"; x: 12; y: 11; width: 22; height: 22 }
+                    TextMetrics { id: fullScreenCapital; font: fullScreenLabel.font; text: "H" }
+                    KText {
+                        id: fullScreenLabel
+                        x: 42; y: (44 - fullScreenCapital.tightBoundingRect.height) / 2 - baselineOffset - fullScreenCapital.tightBoundingRect.y
+                        text: "Full screen"; font.pixelSize: Theme.controlSize; heading: true
+                    }
+                    KSwitch {
+                        anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                        checked: appRuntime.appearance.fullScreen
+                        onClicked: appRuntime.appearance.setFullScreen(!appRuntime.appearance.fullScreen)
+                        Accessible.name: "Full screen"
+                    }
+                }
                 KText { visible: !!appRuntime.appearance.error; x: 12; text: appRuntime.appearance.error; width: parent.width - 24; font.pixelSize: 14 }
                 KText { visible: !!shell.controls.controlError; x: 12; text: shell.controls.controlError; width: parent.width - 24; font.pixelSize: 14 }
                 Rectangle { visible: shell.reader.popoverReaderAvailable || shell.packages.popoverFeatures.length > 0; x: 12; width: parent.width - 24; height: 1; color: Theme.line }

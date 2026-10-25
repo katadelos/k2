@@ -64,6 +64,9 @@ Item {
             line([3,9,8,9,8,6]); beginPath(); arc(11,6,3,Math.PI,0); stroke()
             line([14,6,14,9,21,9,21,14,18,14]); beginPath(); arc(18,17,3,-Math.PI/2,Math.PI/2,true); stroke()
             line([18,20,21,20,21,22,3,22,3,9])
+        } else if (name === "fullscreen") {
+            line([3,9,3,3,9,3]);line([15,3,21,3,21,9])
+            line([21,15,21,21,15,21]);line([9,21,3,21,3,15])
         } else if (name === "device") {
             strokeRect(5,2,14,20);line([9,18.5,15,18.5])
         } else if (name === "usb") {

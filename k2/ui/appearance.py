@@ -1,4 +1,4 @@
-"""Appearance preference, using Kindle's display inversion when available."""
+"""Persistent display preferences and Kindle's native display inversion."""
 
 from pathlib import Path
 
@@ -24,6 +24,9 @@ class Appearance(QObject):
             else QSettings(QSettings.IniFormat, QSettings.UserScope, "k2", "simulator")
         )
         self._local_dark = self._settings.value("appearance/darkMode", False, type=bool)
+        self._full_screen = self._settings.value(
+            "appearance/fullScreen", False, type=bool
+        )
         native = (
             device
             and family == "kindle"
@@ -63,6 +66,19 @@ class Appearance(QObject):
     @pyqtProperty(bool, notify=changed)
     def darkMode(self):
         return self._dark
+
+    @pyqtProperty(bool, notify=changed)
+    def fullScreen(self):
+        return self._full_screen
+
+    @pyqtSlot(bool)
+    def setFullScreen(self, enabled):
+        if self._closed or enabled == self._full_screen:
+            return
+        self._full_screen = enabled
+        self._settings.setValue("appearance/fullScreen", enabled)
+        self._settings.sync()
+        self.changed.emit()
 
     @pyqtProperty(bool, notify=changed)
     def paletteDarkMode(self):
