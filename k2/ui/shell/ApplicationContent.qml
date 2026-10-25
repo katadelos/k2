@@ -44,6 +44,7 @@ Item {
                 id: pageLoader
                 Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumHeight: 0
                 enabled: !routeLoad.running
+                onLoaded: if (content.visible && !shell.packages.loading) appRuntime.requestDisplayCleanup(false)
                 function loadRoute() {
                     setSource(shell.navigation.source, {shell: content.appShell, viewModel: shell.navigation.model})
                 }
@@ -71,7 +72,11 @@ Item {
             }
         }
         Rectangle {
-            visible: shell.confirmations.active; onVisibleChanged: if (visible) cancelAction.forceActiveFocus()
+            visible: shell.confirmations.active
+            onVisibleChanged: {
+                if (visible) cancelAction.forceActiveFocus()
+                if (content.visible) appRuntime.requestDisplayCleanup(!visible)
+            }
             anchors.fill: parent; color: Qt.rgba(Theme.paper.r, Theme.paper.g, Theme.paper.b, 0.8)
             MouseArea { anchors.fill: parent }
             KSurface {

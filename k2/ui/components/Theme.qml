@@ -9,7 +9,8 @@ QtObject {
     }
     readonly property bool darkMode: appRuntime.appearance.paletteDarkMode
     readonly property color ink: darkMode ? "#ffffff" : "#000000"
-    readonly property color secondary: darkMode ? "#aaaaaa" : "#555555"
+    // Thin gray text needs more contrast on the native 600 px panels.
+    readonly property color secondary: darkMode ? (panelWidth === 600 ? "#cccccc" : "#aaaaaa") : (panelWidth === 600 ? "#333333" : "#555555")
     readonly property color line: darkMode ? "#666666" : "#aaaaaa"
     readonly property color faint: darkMode ? "#333333" : "#e5e5e5"
     readonly property color paper: darkMode ? "#000000" : "#ffffff"

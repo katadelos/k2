@@ -5,7 +5,10 @@ import QtQuick.Layouts 1.15
 Item {
     property var shell
     visible: shell.controls.controlsOpen && !shell.packages.loading
-    onVisibleChanged: if (visible) appRuntime.appearance.refresh()
+    onVisibleChanged: {
+        if (visible) appRuntime.appearance.refresh()
+        appRuntime.requestDisplayCleanup(!visible)
+    }
     Rectangle { anchors.fill: parent; color: Qt.rgba(Theme.paper.r, Theme.paper.g, Theme.paper.b, 0.6) }
     MouseArea { anchors.fill: parent; onClicked: shell.controls.closeControls() }
     KSurface {
@@ -29,7 +32,7 @@ Item {
                         TextMetrics { id: wifiCapital; font: wifiLabel.font; text: "H" }
                         KText {
                             id: wifiLabel
-                            x: 42; y: (44 - wifiCapital.tightBoundingRect.height) / 2 - baselineOffset - wifiCapital.tightBoundingRect.y
+                            x: 42; y: Math.round((44 - wifiCapital.tightBoundingRect.height) / 2 - baselineOffset - wifiCapital.tightBoundingRect.y)
                             text: "Wi-Fi"; font.pixelSize: Theme.controlSize; heading: true
                         }
                         KSwitch {
@@ -50,7 +53,7 @@ Item {
                         TextMetrics { id: lightCapital; font: lightLabel.font; text: "H" }
                         KText {
                             id: lightLabel
-                            x: 42; y: (44 - lightCapital.tightBoundingRect.height) / 2 - baselineOffset - lightCapital.tightBoundingRect.y
+                            x: 42; y: Math.round((44 - lightCapital.tightBoundingRect.height) / 2 - baselineOffset - lightCapital.tightBoundingRect.y)
                             text: "Brightness"; font.pixelSize: Theme.controlSize; heading: true
                         }
                         KText { anchors.right: parent.right; anchors.rightMargin: 12; anchors.baseline: lightLabel.baseline; text: Math.round(light.value / light.to * 100) + "%"; font.pixelSize: 15; color: Theme.secondary }
@@ -101,7 +104,7 @@ Item {
                     TextMetrics { id: darkCapital; font: darkLabel.font; text: "H" }
                     KText {
                         id: darkLabel
-                        x: 42; y: (44 - darkCapital.tightBoundingRect.height) / 2 - baselineOffset - darkCapital.tightBoundingRect.y
+                        x: 42; y: Math.round((44 - darkCapital.tightBoundingRect.height) / 2 - baselineOffset - darkCapital.tightBoundingRect.y)
                         text: "Dark mode"; font.pixelSize: Theme.controlSize; heading: true
                     }
                     KSwitch {
@@ -119,7 +122,7 @@ Item {
                     TextMetrics { id: fullScreenCapital; font: fullScreenLabel.font; text: "H" }
                     KText {
                         id: fullScreenLabel
-                        x: 42; y: (44 - fullScreenCapital.tightBoundingRect.height) / 2 - baselineOffset - fullScreenCapital.tightBoundingRect.y
+                        x: 42; y: Math.round((44 - fullScreenCapital.tightBoundingRect.height) / 2 - baselineOffset - fullScreenCapital.tightBoundingRect.y)
                         text: "Full screen"; font.pixelSize: Theme.controlSize; heading: true
                     }
                     KSwitch {

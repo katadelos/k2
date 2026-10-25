@@ -51,6 +51,7 @@ class _InstalledDevice(Protocol):
 class _DisplayUpdates(Protocol):
     def close(self) -> None: ...
     def flush_pending(self) -> None: ...
+    def request_cleanup(self, full: bool = True) -> None: ...
 
 
 class _KeyboardDisplay(Protocol):
@@ -141,6 +142,12 @@ class Runtime(QObject):
     @pyqtProperty(QObject, constant=True)
     def appearance(self) -> Appearance:
         return self._appearance
+
+    @pyqtSlot(bool)
+    def requestDisplayCleanup(self, full: bool) -> None:
+        """Clean up a semantic UI transition after its pixels reach X."""
+        if not self._closed and self.display_updates is not None:
+            self.display_updates.request_cleanup(full)
 
     def attach_controller(self, controller: RuntimeController) -> None:
         if self._closed:

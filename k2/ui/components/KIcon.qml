@@ -6,6 +6,7 @@ Item {
     implicitWidth: 24
     implicitHeight: 24
     readonly property var geometry: paths(name)
+    readonly property real strokeWidth: panelWidth === 600 ? 2.25 : 1.65
 
     // Images participate in software-renderer clipping and damage tracking
     // without a live Shape render node or an offscreen scene layer.
@@ -13,12 +14,14 @@ Item {
         anchors.fill: parent
         sourceSize: Qt.size(Math.ceil(icon.width * panelWidth / 600), Math.ceil(icon.height * panelWidth / 600))
         asynchronous: false
+        // The SVG already supplies antialiased pixels at the panel resolution.
+        smooth: panelWidth !== 600 || windowScale !== 1
         opacity: icon.ink.a
         readonly property string paint: Qt.rgba(icon.ink.r, icon.ink.g, icon.ink.b, 1).toString()
         source: "data:image/svg+xml;utf8," + encodeURIComponent(
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'
             + '<path d="' + icon.geometry.stroke + '" fill="none" stroke="' + paint
-            + '" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>'
+            + '" stroke-width="' + icon.strokeWidth + '" stroke-linecap="round" stroke-linejoin="round"/>'
             + '<path d="' + icon.geometry.fill + '" fill="' + paint + '"/></svg>')
     }
 

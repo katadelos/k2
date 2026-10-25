@@ -9,6 +9,11 @@ Window {
     onApplicationLoadFailedChanged: if (applicationLoadFailed && deferredStartup) appRuntime.fail_application_load()
     property bool minimumSplashElapsed: false
     property bool componentReady: false
+    readonly property bool displayDark: appRuntime.appearance.paletteDarkMode
+    readonly property bool displayFullscreen: appRuntime.appearance.fullScreen
+    onDisplayDarkChanged: if (componentReady) appRuntime.requestDisplayCleanup(true)
+    onDisplayFullscreenChanged: if (componentReady) appRuntime.requestDisplayCleanup(true)
+    onSplashVisibleChanged: if (componentReady && !splashVisible) appRuntime.requestDisplayCleanup(true)
     width: panelWidth * windowScale; height: panelHeight * windowScale
     visible: true; color: Theme.paper
     title: deviceMode && deviceFamily === "kindle" ? "L:A_N:application_ID:org.k2_PC:" + (appRuntime.appearance.fullScreen ? "N" : "T") : appShell ? "k2 — " + appShell.controls.info.model + " simulator" : "k2"
