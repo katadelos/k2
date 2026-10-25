@@ -151,7 +151,7 @@ Item {
             KSurface {
                 id: nameBox
                 Layout.fillWidth: true; implicitHeight: 52
-                borderColor: nameField.activeFocus ? Theme.ink : Theme.line; radius: Theme.radius
+                borderColor: nameField.activeFocus ? Theme.ink : Theme.outline; radius: Theme.radius
                 TextField {
                     id: nameField; anchors.fill: parent; padding: 12
                     placeholderText: "Folder name"; background: Item {}

@@ -12,7 +12,7 @@ AbstractButton {
         KSurface {
             anchors.centerIn: parent; width: 48; height: 26; radius: 13
             color: control.checked ? Theme.ink : Theme.wash
-            borderColor: control.visualFocus ? Theme.ink : Theme.line
+            borderColor: control.visualFocus ? Theme.ink : Theme.outline
             borderWidth: control.visualFocus ? 2 : 1
             KSurface {
                 x: control.checked ? 25 : 3; y: 3; width: 20; height: 20; radius: 10

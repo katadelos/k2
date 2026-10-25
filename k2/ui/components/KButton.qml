@@ -24,7 +24,7 @@ Button {
             visible: !control.flat
             anchors.fill: parent
             color: control.down ? (control.primary ? Theme.primaryPressed : Theme.ink) : control.primary ? Theme.ink : Theme.paper
-            borderColor: control.visualFocus ? Theme.ink : Theme.line
+            borderColor: control.visualFocus ? Theme.ink : Theme.outline
             borderWidth: control.visualFocus ? 2 : 1
             radius: Theme.radius
         }

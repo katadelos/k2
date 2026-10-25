@@ -5,7 +5,7 @@ KSurface {
     implicitWidth: label.implicitWidth + 16; implicitHeight: 26
     width: implicitWidth; height: implicitHeight
     radius: 4; color: emphasized ? Theme.ink : Theme.wash
-    borderColor: emphasized ? Theme.ink : Theme.line
+    borderColor: emphasized ? Theme.ink : Theme.outline
     KText {
         id: label; anchors.centerIn: parent
         text: parent.text; font.pixelSize: 13 + Theme.textSizeAdjustment; lineHeight: 1

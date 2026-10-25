@@ -44,7 +44,7 @@ ColumnLayout {
         KSurface {
             id: searchBox
             Layout.fillWidth: true; implicitHeight: 48
-            borderColor: searchField.activeFocus ? Theme.ink : Theme.line; radius: Theme.radius; color: Theme.paper
+            borderColor: searchField.activeFocus ? Theme.ink : Theme.outline; radius: Theme.radius; color: Theme.paper
             KIcon { name: "search"; width: 20; height: 20; anchors.left: parent.left; anchors.leftMargin: 14; anchors.verticalCenter: parent.verticalCenter; ink: Theme.secondary }
             TextField {
                 id: searchField

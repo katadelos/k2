@@ -12,6 +12,8 @@ QtObject {
     // Thin gray text needs more contrast on the native 600 px panels.
     readonly property color secondary: darkMode ? (panelWidth === 600 ? "#cccccc" : "#aaaaaa") : (panelWidth === 600 ? "#333333" : "#555555")
     readonly property color line: darkMode ? "#666666" : "#aaaaaa"
+    // One-pixel gray outlines break up on the native 600 px e-ink panels.
+    readonly property color outline: panelWidth === 600 ? ink : line
     readonly property color faint: darkMode ? "#333333" : "#e5e5e5"
     readonly property color paper: darkMode ? "#000000" : "#ffffff"
     readonly property color wash: darkMode ? "#151515" : "#f4f4f4"

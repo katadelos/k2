@@ -37,7 +37,7 @@ ColumnLayout {
         }
         KSurface {
             id: sourceBox; Layout.fillWidth: true; implicitHeight: 48
-            borderColor: sourceField.activeFocus ? Theme.ink : Theme.line; radius: Theme.radius
+            borderColor: sourceField.activeFocus ? Theme.ink : Theme.outline; radius: Theme.radius
             TextField {
                 id: sourceField; anchors.fill: parent; padding: 12
                 placeholderText: "https://… or a file path"; background: Item {}
