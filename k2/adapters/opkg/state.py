@@ -22,6 +22,7 @@ _RESULT_FIELDS = {
     "restartReaderRequired": bool,
     "restartAutomatic": bool,
     "restartUncertain": bool,
+    "reloadKppRequired": bool,
 }
 
 

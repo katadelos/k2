@@ -41,6 +41,7 @@ def main() -> int:
         screen.height(),
         device=True,
         family=args.family,
+        model=device.model,
         settings_path=device.sdk / "etc/k2/ui.ini",
     )
 

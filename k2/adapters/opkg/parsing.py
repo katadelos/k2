@@ -100,6 +100,8 @@ def parse_plan(output: str) -> PackagePlan:
             for item in changes
         ),
         restart_reader_required=any(
-            item.name == "k2-nickel" and item.action != "remove" for item in changes
+            (item.name == "k2-nickel" and item.action != "remove")
+            or (item.name == "kppmods" and item.action == "remove")
+            for item in changes
         ),
     )

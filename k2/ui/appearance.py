@@ -16,7 +16,7 @@ from PyQt5.QtCore import (
 class Appearance(QObject):
     changed = pyqtSignal()
 
-    def __init__(self, parent, *, device, family, settings_path=None):
+    def __init__(self, parent, *, device, family, model=None, settings_path=None):
         super().__init__(parent)
         self._settings = (
             QSettings(str(settings_path), QSettings.IniFormat)
@@ -27,6 +27,11 @@ class Appearance(QObject):
         native = (
             device
             and family == "kindle"
+            # Basic 2019 exposes epdcMode but lacks the night-mode waveforms.
+            # Its firmware accepts Y8INV and then blanks the display. Render
+            # the dark palette in software while keeping normal waveforms.
+            and model is not None
+            and model != "Kindle Basic 2019"
             and all(
                 Path(f"/usr/bin/lipc-{command}").is_file()
                 for command in ("get-prop", "set-prop", "wait-event")
@@ -67,7 +72,7 @@ class Appearance(QObject):
 
     @pyqtProperty(bool, notify=changed)
     def busy(self):
-        return self._action is not None
+        return self._native is None or self._action is not None
 
     @pyqtProperty(str, notify=changed)
     def error(self):
@@ -75,7 +80,7 @@ class Appearance(QObject):
 
     def _start(self, action, value=None):
         self._action = action
-        arguments = ["com.lab126.winmgr", "epdcMode"]
+        arguments = ["-s", "com.lab126.winmgr", "epdcMode"]
         if value is not None:
             arguments.append(value)
         self._deadline.start()
@@ -88,7 +93,7 @@ class Appearance(QObject):
     def refresh(self):
         if self._closed or self._native is False:
             return
-        if self.busy:
+        if self._action is not None:
             self._refresh_pending = True
         else:
             self._start("read")
@@ -102,7 +107,7 @@ class Appearance(QObject):
             self._target = enabled
             self._start("write", "Y8INV" if enabled else "Y8")
         else:
-            self._dark = enabled
+            self._dark = self._local_dark = enabled
             self._settings.setValue("appearance/darkMode", enabled)
             self._settings.sync()
             self.changed.emit()

@@ -20,6 +20,7 @@ ColumnLayout {
     }
     KText { visible: !!viewModel.stateWarning; text: viewModel.stateWarning; Layout.fillWidth: true; font.pixelSize: Theme.smallSize }
     KText { visible: !!viewModel.restartError; text: viewModel.restartError; Layout.fillWidth: true; font.pixelSize: Theme.smallSize }
+    KText { visible: !viewModel.busy && !!viewModel.result.reloadKppRequired; text: "Exit k2 and open KPP Mods from your library to apply the changes."; Layout.fillWidth: true; font.pixelSize: Theme.smallSize }
     KText { visible: !viewModel.busy && !!viewModel.result.restartUncertain; text: "Couldn’t verify which runtime packages changed. Reload the package list to check whether a restart is needed."; Layout.fillWidth: true; font.pixelSize: Theme.smallSize }
     KSurface {
         visible: viewModel.busy; Layout.fillWidth: true; implicitHeight: 56; color: Theme.wash; radius: Theme.radius
@@ -30,7 +31,7 @@ ColumnLayout {
         Layout.fillWidth: true; implicitHeight: catalogMessage.height + 32; color: Theme.wash; radius: Theme.radius
         KText { id: catalogMessage; x: 16; y: 16; width: parent.width - 32; text: "Couldn’t reload the package list.\n" + viewModel.catalogWarning; font.pixelSize: Theme.smallSize; maximumLineCount: 4; elide: Text.ElideRight }
     }
-    KText { visible: !viewModel.busy && ((!!viewModel.result.restartRequired && !viewModel.result.restartAutomatic) || !!viewModel.result.restartReaderRequired); text: viewModel.result.restartReaderRequired ? "Restart your Kobo to apply the packages that changed." : "Exit and reopen k2 to apply the packages that changed."; font.pixelSize: Theme.smallSize; Layout.fillWidth: true }
+    KText { visible: !viewModel.busy && ((!!viewModel.result.restartRequired && !viewModel.result.restartAutomatic) || !!viewModel.result.restartReaderRequired); text: viewModel.result.restartReaderRequired ? "Restart your reader to apply the packages that changed." : "Exit and reopen k2 to apply the packages that changed."; font.pixelSize: Theme.smallSize; Layout.fillWidth: true }
     KSurface {
         visible: !viewModel.busy && !viewModel.failed && !!viewModel.activityApplication.name && viewModel.operation.action !== "update"
         Layout.fillWidth: true; implicitHeight: nextStep.height + 32; color: Theme.wash; radius: Theme.radius

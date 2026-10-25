@@ -29,11 +29,15 @@ def plan_summary(plan: PackagePlan, request: PackageRequest) -> str:
     if plan.download_bytes is not None and request.action != "remove":
         sentences.append(f"Download: up to {_size(plan.download_bytes)}.")
     if plan.restart_reader_required:
-        sentences.append("Restart your Kobo after this update.")
+        sentences.append("Restart your reader after this change.")
     elif plan.restart_automatically:
         sentences.append("k2 will restart automatically after this update.")
     elif plan.restart_required:
         sentences.append("Exit and reopen k2 after this update.")
+    if plan.reload_kpp_required:
+        sentences.append(
+            "After packages finish, exit k2 and open KPP Mods to apply the changes."
+        )
     return " ".join(sentences)
 
 

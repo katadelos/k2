@@ -72,6 +72,7 @@ class Runtime(QObject):
         qml_path: str | Path | None = None,
         context_name: str = "shell",
         family: str | None = None,
+        model: str | None = None,
         settings_path: str | Path | None = None,
     ) -> None:
         super().__init__(app)
@@ -82,6 +83,8 @@ class Runtime(QObject):
                 raise ValueError("Deferred startup requires a device family")
             family = str(controller.info["family"])
         self.family = family
+        if model is None and controller is not None:
+            model = str(controller.info["model"])
         self._closed = False
         self._presented = False
         self.width, self.height = width, height
@@ -93,7 +96,11 @@ class Runtime(QObject):
                 cast(_InstalledDevice, controller.device).sdk / "etc/k2/ui.ini"
             )
         self._appearance = Appearance(
-            self, device=device, family=self.family, settings_path=settings_path
+            self,
+            device=device,
+            family=self.family,
+            model=model,
+            settings_path=settings_path,
         )
         self.offscreen = not device and app.platformName() == "offscreen"
         # At the 600 px layout's native size, use hinted device metrics.

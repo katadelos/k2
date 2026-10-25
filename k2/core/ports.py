@@ -86,6 +86,7 @@ class OperationResult(TypedDict, total=False):
     restartReaderRequired: bool
     restartAutomatic: bool
     restartUncertain: bool
+    reloadKppRequired: bool
 
 
 class DeviceBackend(Protocol):

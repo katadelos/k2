@@ -75,6 +75,9 @@ class OpkgBackend(QObject):
         self.process = QProcess(self)
         environment = QProcessEnvironment.systemEnvironment()
         environment.insert("LC_ALL", "C")
+        # KPP activation restarts appmgrd, which kills its scriptlet clients,
+        # including k2. Let opkg commit its status before any explicit reload.
+        environment.insert("KPPMOD_DEFER_RELOAD", "1")
         self.process.setProcessEnvironment(environment)
         self.process.setProcessChannelMode(QProcess.MergedChannels)
         self.process.readyReadStandardOutput.connect(self._read)
@@ -219,6 +222,7 @@ class OpkgBackend(QObject):
                 "catalogError": "",
                 "restartRequired": False,
                 "restartReaderRequired": False,
+                "reloadKppRequired": False,
                 "restartAutomatic": False,
                 "restartUncertain": self._restart_baseline is not None,
                 "log": self.log,
@@ -351,7 +355,9 @@ class OpkgBackend(QObject):
             error = plan.error
         if success:
             self._planned_restart = (
-                plan.restart_required or plan.restart_reader_required
+                plan.restart_required
+                or plan.restart_reader_required
+                or plan.reload_kpp_required
             )
             # Capture the actual status immediately before mutation. The cached
             # browsing catalog may predate changes made by another opkg client.

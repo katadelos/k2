@@ -63,6 +63,7 @@ class RestartFlags(TypedDict):
     restartRequired: bool
     restartReaderRequired: bool
     restartAutomatic: bool
+    reloadKppRequired: bool
 
 
 @dataclass(frozen=True)
@@ -99,6 +100,13 @@ class PackagePlan:
     restart_required: bool = False
     restart_reader_required: bool = False
     error: str = ""
+
+    @property
+    def reload_kpp_required(self) -> bool:
+        return any(is_kpp_package(change.name) for change in self.changes) and not any(
+            change.name == "kppmods" and change.action == "remove"
+            for change in self.changes
+        )
 
     @property
     def restart_automatically(self) -> bool:
@@ -148,6 +156,10 @@ PROTECTED = {
 RESTART_PACKAGES = PROTECTED | {"qt5-kobo-platform", "fbink"}
 
 
+def is_kpp_package(name: str) -> bool:
+    return name == "kppmods" or name.startswith("kppmods-")
+
+
 def restart_flags(
     before: Mapping[str, InstalledPackage], after: Mapping[str, InstalledPackage]
 ) -> RestartFlags:
@@ -157,7 +169,8 @@ def restart_flags(
         for name in before.keys() | after.keys()
         if before.get(name) != after.get(name)
     }
-    reader = "k2-nickel" in changed
+    kpp_removed = "kppmods" in before and "kppmods" not in after
+    reader = "k2-nickel" in changed or kpp_removed
     runtime_ready = all(
         name in after and after[name].state == "installed"
         for name in changed & RESTART_PACKAGES
@@ -166,4 +179,6 @@ def restart_flags(
         "restartRequired": bool(changed & RESTART_PACKAGES),
         "restartReaderRequired": reader,
         "restartAutomatic": bool("k2" in changed and runtime_ready and not reader),
+        "reloadKppRequired": not kpp_removed
+        and any(is_kpp_package(name) for name in changed),
     }
