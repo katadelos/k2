@@ -10,6 +10,17 @@ from ...core.packages import RESTART_PACKAGES, PackageChange, PackagePlan
 PACKAGE_NAME = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9.+_-]*\Z")
 
 
+def failure_message(output: str) -> str:
+    """Keep the failure readable; complete command output stays in the log."""
+    lines = [line.strip() for line in output.splitlines() if line.strip()]
+    errors = [
+        line
+        for line in lines
+        if line.lower().startswith(("error:", "error ", "failed:"))
+    ]
+    return "\n".join(dict.fromkeys(errors or lines[-1:]))[:1024]
+
+
 def package_lines(output: str) -> Iterator[tuple[str, str, str]]:
     for line in output.splitlines():
         fields = line.split(" - ", 2)

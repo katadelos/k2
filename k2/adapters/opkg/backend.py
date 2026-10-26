@@ -17,7 +17,7 @@ from ...core.packages import (
 from ...core.ports import OperationResult
 from .catalog import installed_snapshot, read_catalog
 from .files import PackageFiles
-from .parsing import PACKAGE_NAME, parse_plan
+from .parsing import PACKAGE_NAME, failure_message, parse_plan
 from .state import ActivityStore
 
 type Command = tuple[str, list[str]]
@@ -307,9 +307,16 @@ class OpkgBackend(QObject):
             return
         self._read()
         success = code == 0 and status == QProcess.NormalExit
-        error = (
-            "" if success else self._output.strip() or f"opkg exited with status {code}"
-        )
+        error = ""
+        if status == QProcess.CrashExit:
+            error = "The package manager stopped unexpectedly."
+            if self._key == "operation" and self._action != "update":
+                error += " Some packages may have changed. Check the installed packages before retrying."
+            self.log = (self.log + f"\nopkg terminated unexpectedly (code {code}).\n")[
+                -32768:
+            ]
+        elif not success:
+            error = failure_message(self._output) or f"opkg exited with status {code}"
         self._complete_command(success, error)
 
     def _command_plan(self, success: bool, error: str) -> PackagePlan:

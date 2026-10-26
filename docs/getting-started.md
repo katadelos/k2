@@ -9,7 +9,7 @@ from the library. On Kobo, you need a configured package manager and a root
 shell that can run `opkg`.
 
 The Kindle installer needs an internet connection. An existing package setup
-must supply K2 and its dependencies, including opkg **0.7.0-r12 or later**.
+must supply K2 and its dependencies, including opkg **0.7.0-r14 or later**.
 
 ### Device profiles
 
