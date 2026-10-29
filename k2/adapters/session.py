@@ -80,6 +80,78 @@ class WakeLease:
                 self.device = None
 
 
+class DisplaySession:
+    """Keep the displayed app scoped to its supervisor on either firmware family."""
+
+    def __init__(self, family, *, retain_display=False, allow_sleep=False):
+        self.bridge = None
+        self.device = None
+        self.framebuffer = None
+        self.direct_framebuffer = (
+            family != "kobo" and os.environ.get("QT_QPA_PLATFORM") == "ereader"
+        )
+        self.visible = False
+        self.allow_sleep = allow_sleep
+        try:
+            if family == "kobo":
+                self.bridge = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                self.bridge.settimeout(4)
+                try:
+                    self.bridge.connect(NICKEL_SOCKET)
+                except OSError as error:
+                    raise OSError(
+                        "The k2 native bridge is not available. Restart the Kobo after installing k2-nickel."
+                    ) from error
+            elif retain_display:
+                from ereader_hal import Device
+
+                self.device = Device()
+            self.set_visible(True)
+        except Exception:
+            self.close()
+            raise
+
+    def set_visible(self, visible):
+        if self.visible == visible:
+            return
+        if self.bridge is not None:
+            if visible:
+                request(self.bridge, "begin", allowSleep=self.allow_sleep)
+            else:
+                request(self.bridge, "end")
+        else:
+            if visible:
+                if self.device is not None:
+                    self.device.retain_display()
+                if self.direct_framebuffer:
+                    from .framebuffer import FramebufferSession
+
+                    self.framebuffer = FramebufferSession()
+            else:
+                if self.framebuffer is not None:
+                    self.framebuffer.close()
+                    self.framebuffer = None
+                if self.device is not None:
+                    self.device.release_display()
+        self.visible = visible
+
+    def close(self):
+        try:
+            if self.bridge is not None:
+                # Disconnect is also the crash cleanup path in Nickel.
+                with suppress(OSError, ValueError):
+                    self.set_visible(False)
+            else:
+                self.set_visible(False)
+        finally:
+            if self.bridge is not None:
+                self.bridge.close()
+                self.bridge = None
+            if self.device is not None:
+                self.device.close()
+                self.device = None
+
+
 def child_setup(parent):
     # If the resource owner is SIGKILLed, the UI must relinquish its display fd.
     # The kernel closes Nickel's session socket and lets the wake lease expire.
@@ -104,7 +176,18 @@ def main():
         action="store_true",
         help="leave sleep and idle timeouts under stock firmware control",
     )
+    parser.add_argument(
+        "--retain-display",
+        action="store_true",
+        help="retain app content while the app coordinates suspend through the HAL",
+    )
     args, arguments = parser.parse_known_args()
+    if args.family == "kobo" and args.retain_display:
+        parser.error("app display retention is only supported on Kindle")
+    if args.allow_sleep and args.retain_display:
+        parser.error(
+            "stock sleep screens and app display retention are mutually exclusive"
+        )
     with open("/var/run/k2-ui.lock", "a") as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -120,6 +203,7 @@ def main():
                 directory,
                 args.module,
                 allow_sleep=args.allow_sleep,
+                retain_display=args.retain_display,
             )
     # A second k2-compatible app acquires the same lock and display session.
     # Release both before starting its launcher.
@@ -137,14 +221,23 @@ def main():
 
 
 def supervise(
-    family, arguments, directory, module="k2.app.device_main", *, allow_sleep=False
+    family,
+    arguments,
+    directory,
+    module="k2.app.device_main",
+    *,
+    allow_sleep=False,
+    retain_display=False,
 ):
     environment = dict(
-        os.environ, K2_SESSION_DIR=directory, K2_ALLOW_SLEEP="1" if allow_sleep else "0"
+        os.environ,
+        K2_SESSION_DIR=directory,
+        K2_ALLOW_SLEEP="1" if allow_sleep else "0",
+        K2_RETAIN_DISPLAY="1" if retain_display else "0",
     )
     control = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     control.bind(str(Path(directory) / "control"))
-    bridge, child = None, None
+    display, child = None, None
     wake = WakeLease(family)
     stopping = False
 
@@ -157,37 +250,31 @@ def supervise(
     for signum in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
         signal.signal(signum, stop)
     try:
-        if family == "kobo":
-            bridge = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            bridge.settimeout(4)
-            try:
-                bridge.connect(NICKEL_SOCKET)
-            except OSError as error:
-                raise OSError(
-                    "The k2 native bridge is not available. Restart the Kobo after installing k2-nickel."
-                ) from error
-            request(bridge, "begin", allowSleep=allow_sleep)
         if not allow_sleep:
             wake.renew()
+        display = DisplaySession(
+            family, retain_display=retain_display, allow_sleep=allow_sleep
+        )
         owner_pid = os.getpid()
         child = subprocess.Popen(  # noqa: S603 -- explicit launcher argv; no shell
             [sys.executable, "-m", module, "--family", family, *arguments],
             env=environment,
             preexec_fn=lambda: child_setup(owner_pid),
         )
-        _wait_for_child(child, control, bridge, wake, family, allow_sleep)
+        _wait_for_child(
+            child, control, display, wake, family, allow_sleep, retain_display
+        )
         result = child.returncode
     finally:
-        _terminate_child(child)
+        _terminate_child(child, timeout=75 if retain_display else 5)
         try:
-            wake.close()
+            if display is not None:
+                display.close()
         finally:
-            if bridge is not None:
-                # Disconnect is also the crash cleanup path in Nickel.
-                with suppress(OSError, ValueError):
-                    request(bridge, "end")
-                bridge.close()
-            control.close()
+            try:
+                wake.close()
+            finally:
+                control.close()
     handoff = Path(directory) / "launch.json"
     argv = []
     if result == 0 and not stopping and handoff.exists():
@@ -201,8 +288,9 @@ def supervise(
     return result, argv
 
 
-def _wait_for_child(child, control, bridge, wake, family, allow_sleep):
+def _wait_for_child(child, control, display, wake, family, allow_sleep, retain_display):
     active, next_renewal = True, 0.0
+    bridge = display.bridge
     while child.poll() is None:
         readable, _, _ = select.select(
             [control] + ([bridge] if bridge else []), [], [], 1
@@ -216,6 +304,8 @@ def _wait_for_child(child, control, bridge, wake, family, allow_sleep):
             if message in (b"active", b"inactive"):
                 active = family == "kobo" or message == b"active"
                 next_renewal = 0
+            elif retain_display and message in (b"retain", b"release"):
+                display.set_visible(message == b"retain")
         if not allow_sleep and active and time.monotonic() >= next_renewal:
             wake.renew()
             next_renewal = time.monotonic() + 15
@@ -223,11 +313,13 @@ def _wait_for_child(child, control, bridge, wake, family, allow_sleep):
             wake.release()
 
 
-def _terminate_child(child):
+def _terminate_child(child, *, timeout=5):
     if child is not None and child.poll() is None:
         child.terminate()
         try:
-            child.wait(timeout=5)
+            # App-owned suspend must finish restoring hardware before its
+            # framebuffer and stock display session can be released.
+            child.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             child.kill()
             child.wait()

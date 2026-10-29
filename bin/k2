@@ -37,8 +37,13 @@ export XDG_CACHE_HOME="$store/cache"
 unset LD_LIBRARY_PATH
 
 if [ "$family" = kindle ]; then
-    export DISPLAY=:0
-    export QT_QPA_PLATFORM=xcb
+    if [ -S /tmp/.X11-unix/X0 ]; then
+        export DISPLAY=:0
+        export QT_QPA_PLATFORM=xcb
+    else
+        export QT_QPA_PLATFORM=ereader
+        export QT_QPA_FB_HIDECURSOR=1
+    fi
     exec "$runtime/usr/bin/python3" -m k2.adapters.session kindle "$@"
 fi
 

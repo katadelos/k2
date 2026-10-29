@@ -26,7 +26,7 @@ def main() -> int:
         )
     runtime_root = Path("/var/run/eink-sdk")
     qt_args = ["k2"]
-    if args.family == "kindle":
+    if os.environ.get("QT_QPA_PLATFORM") == "xcb":
         from ..adapters.kindle_x11 import grayscale_visual
 
         qt_args += ["-visual", grayscale_visual()]
