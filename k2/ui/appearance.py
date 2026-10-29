@@ -12,6 +12,25 @@ from PyQt5.QtCore import (
     pyqtSlot,
 )
 
+# Stock epdcMode exists even when its setter is unsupported (Voyage), or the
+# panel lacks night-mode waveforms (Basic 2019). Only use it on supported models.
+# Waveform support: https://github.com/NiLuJe/FBInk/blob/master/fbink_device_id.c
+_NATIVE_DARK_MODE_MODELS = {
+    "Kindle Oasis 2",
+    "Kindle Oasis 3",
+    "Kindle Paperwhite 4",
+    "Kindle Paperwhite 5",
+    "Kindle Paperwhite 5 Signature",
+    "Kindle Basic 2022",
+    "Kindle Scribe",
+    "Kindle Scribe 2024",
+    "Kindle Colorsoft",
+    "Kindle Basic 2024 (KT6)",
+    "Kindle Paperwhite 6",
+    "Kindle Scribe 3",
+    "Kindle Scribe Colorsoft",
+}
+
 
 class Appearance(QObject):
     changed = pyqtSignal()
@@ -30,11 +49,7 @@ class Appearance(QObject):
         native = (
             device
             and family == "kindle"
-            # Basic 2019 exposes epdcMode but lacks the night-mode waveforms.
-            # Its firmware accepts Y8INV and then blanks the display. Render
-            # the dark palette in software while keeping normal waveforms.
-            and model is not None
-            and model != "Kindle Basic 2019"
+            and model in _NATIVE_DARK_MODE_MODELS
             and all(
                 Path(f"/usr/bin/lipc-{command}").is_file()
                 for command in ("get-prop", "set-prop", "wait-event")
