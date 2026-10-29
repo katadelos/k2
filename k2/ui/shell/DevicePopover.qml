@@ -5,16 +5,12 @@ import QtQuick.Layouts 1.15
 Item {
     property var shell
     visible: shell.controls.controlsOpen && !shell.packages.loading
-    onVisibleChanged: {
-        if (visible) appRuntime.appearance.refresh()
-        appRuntime.requestDisplayCleanup(!visible)
-    }
-    Rectangle { anchors.fill: parent; color: Qt.rgba(Theme.paper.r, Theme.paper.g, Theme.paper.b, 0.6) }
+    onVisibleChanged: if (visible) appRuntime.appearance.refresh()
     MouseArea { anchors.fill: parent; onClicked: shell.controls.closeControls() }
     KSurface {
         anchors.right: parent.right; anchors.rightMargin: 24; y: 60
         width: 320; height: Math.min(contents.height + 36, parent.height - y - 24)
-        color: Theme.paper; borderColor: Theme.ink; radius: Theme.radius
+        color: Theme.paper; borderColor: Theme.ink; borderWidth: 2; radius: Theme.radius
         MouseArea { anchors.fill: parent }
         Flickable {
             anchors.fill: parent; anchors.margins: 18

@@ -61,6 +61,7 @@ class _KeyboardDisplay(Protocol):
 
 class Runtime(QObject):
     firstFrame = pyqtSignal()
+    _CLEANUP_PAGE_INTERVAL = 10
 
     def __init__(
         self,
@@ -88,6 +89,7 @@ class Runtime(QObject):
             model = str(controller.info["model"])
         self._closed = False
         self._presented = False
+        self._display_page_changes = 0
         self.width, self.height = width, height
         self.device, self.scale = device, scale
         if settings_path is None and device and controller is not None:
@@ -143,11 +145,24 @@ class Runtime(QObject):
     def appearance(self) -> Appearance:
         return self._appearance
 
-    @pyqtSlot(bool)
-    def requestDisplayCleanup(self, full: bool) -> None:
-        """Clean up a semantic UI transition after its pixels reach X."""
+    @pyqtSlot()
+    def requestDisplayCleanup(self) -> None:
+        """Clear panel history after startup or a palette/geometry change."""
         if not self._closed and self.display_updates is not None:
-            self.display_updates.request_cleanup(full)
+            self._display_page_changes = 0
+            self.display_updates.request_cleanup(full=True)
+
+    @pyqtSlot()
+    def displayPageChanged(self) -> None:
+        """Let normal damage settle pages, with an occasional ghosting cleanup."""
+        if self._closed or self.display_updates is None:
+            return
+        # Count whole-page navigation, never transient overlays, typing, scroll
+        # frames or background status updates. Both FAST_FULL and SLOW_FULL
+        # flash on Kindle; ordinary navigation should request neither.
+        self._display_page_changes += 1
+        if self._display_page_changes >= self._CLEANUP_PAGE_INTERVAL:
+            self.requestDisplayCleanup()
 
     def attach_controller(self, controller: RuntimeController) -> None:
         if self._closed:
@@ -225,6 +240,7 @@ class Runtime(QObject):
         self.keyboard_display = keyboard_display
         self.engine = engine
         self._presented = False
+        self._display_page_changes = 0
         self.display_updates = keyboard_display.attach(self.window)
         self.window.activeChanged.connect(self._sync_activity)
         self.window.activeChanged.connect(self._appearance.refresh)
