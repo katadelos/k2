@@ -148,7 +148,7 @@ Item {
                 Rectangle { x: 12; width: parent.width - 24; height: 1; color: Theme.line }
                 KButton { text: "Device details"; symbol: "device"; flat: true; alignLeft: true; width: parent.width; onClicked: shell.navigation.navigate("device") }
                 KButton { text: "Exit k2"; symbol: "exit"; flat: true; alignLeft: true; width: parent.width; enabled: shell.operations.canExit; onClicked: shell.quit() }
-                KText { visible: shell.packages.busy || shell.remote.featureWorking || shell.reader.readerWorking; x: 12; text: (shell.reader.readerWorking ? shell.reader.readerActivity : shell.remote.featureWorking ? "Updating remote access settings…" : shell.packages.activityTitle) + "\nYou can exit when this finishes."; width: parent.width - 24; color: Theme.secondary; font.pixelSize: 13 }
+                KText { visible: !shell.operations.canExit; x: 12; text: (shell.operations.activity.title || "") + "\nYou can exit when this finishes."; width: parent.width - 24; color: Theme.secondary; font.pixelSize: 13 }
             }
         }
     }

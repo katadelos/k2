@@ -127,10 +127,14 @@ class PackagesViewModel(QObject):
     @pyqtProperty(bool, notify=availabilityChanged)
     def canLaunch(self):
         return (
-            self.canChange
+            (not self.busy or self.backend.checking_updates)
+            and not self._loading
+            and not self._restart_pending
             and not self.confirmations.active
             and not self.catalogWarning
-            and self.operations.allows({"controls"})
+            and self.operations.allows(
+                PACKAGE_RESOURCES | {"controls"}, owner="packages"
+            )
         )
 
     @pyqtProperty(QObject, constant=True)
@@ -158,12 +162,13 @@ class PackagesViewModel(QObject):
     def _sync_operation(self):
         operation = None
         if self.busy:
-            checking = self._operation.get("action") == "update"
+            checking = self.backend.checking_updates
             operation = Operation(
                 # Fetching catalog metadata does not change installed software
                 # or reader state. Device controls can keep working meanwhile.
                 resources=frozenset({"catalog"}) if checking else PACKAGE_RESOURCES,
                 working=self.backend.busy,
+                cancellable=checking,
                 title=self.activityTitle,
                 route="activity",
                 hidden_pages=("apps", "file-sharing") if checking else (),
@@ -359,6 +364,7 @@ class PackagesViewModel(QObject):
         self._discard_pending_plan()
         self._startup_refresh_timer.stop()
         self._featured.stop()
+        self.backend.cancel_update()
 
     def close(self):
         self.stop()
@@ -433,6 +439,8 @@ class PackagesViewModel(QObject):
                 if action == "update"
                 else "k2 closed before finishing"
             )
+        if self.result.get("state") == "cancelled" and not self.busy:
+            return "Update check cancelled"
         if not action:
             return "Couldn’t load packages" if self.failed else "Activity"
         if action == "update":

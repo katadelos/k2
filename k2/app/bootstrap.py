@@ -99,9 +99,9 @@ def compose(
         ("about", "About k2", "AboutPage.qml"),
     ]:
         navigation.register(Route(name, title, str(directory / qml), shell))
-    packages.exitRequested.connect(shell.exitRequested)
+    packages.exitRequested.connect(shell.quit)
     packages.restartRequested.connect(shell.quit)
-    reader.exitRequested.connect(shell.exitRequested)
+    reader.exitRequested.connect(shell.quit)
 
     def select_feature(feature: PackageFeature) -> None:
         if feature["kind"] == "file-sharing":

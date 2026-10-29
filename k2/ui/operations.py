@@ -10,6 +10,7 @@ from PyQt5.QtCore import QObject, pyqtProperty, pyqtSignal, pyqtSlot
 class Operation:
     resources: frozenset[str] = field(default_factory=frozenset)
     working: bool = False
+    cancellable: bool = False
     title: str = ""
     route: str = ""
     hidden_pages: tuple[str, ...] = ()
@@ -55,9 +56,11 @@ class Operations(QObject):
     def needsAwake(self):
         return any(job.working for job in self._active.values())
 
-    @pyqtProperty(bool, notify=awakeChanged)
+    @pyqtProperty(bool, notify=changed)
     def canExit(self):
-        return not self.needsAwake
+        return not any(
+            job.working and not job.cancellable for job in self._active.values()
+        )
 
     @pyqtProperty(bool, notify=idleChanged)
     def idle(self):

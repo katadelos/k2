@@ -22,6 +22,8 @@ from .state import ActivityStore
 
 type Command = tuple[str, list[str]]
 
+UPDATE_TIMEOUT_MS = 15000
+
 
 class OpkgBackend(QObject):
     catalogChanged = pyqtSignal()
@@ -71,6 +73,12 @@ class OpkgBackend(QObject):
         self._baseline_loaded = False
         self._planned_restart = False
         self._transaction_ran = False
+        self._update_error = ""
+        self._update_cancelled = False
+        self._update_timer = QTimer(self)
+        self._update_timer.setSingleShot(True)
+        self._update_timer.setInterval(UPDATE_TIMEOUT_MS)
+        self._update_timer.timeout.connect(self._update_timed_out)
         self._load_state()
         self.process = QProcess(self)
         environment = QProcessEnvironment.systemEnvironment()
@@ -83,6 +91,30 @@ class OpkgBackend(QObject):
         self.process.readyReadStandardOutput.connect(self._read)
         self.process.finished.connect(self._done)
         self.process.errorOccurred.connect(self._error)
+
+    @property
+    def checking_updates(self) -> bool:
+        return self.busy and self._mode == "perform" and self._action == "update"
+
+    def cancel_update(self) -> None:
+        self._abort_update("Update check cancelled.", cancelled=True)
+
+    def _update_timed_out(self) -> None:
+        self._abort_update(
+            "Update check timed out. Check your connection or feed server and try again."
+        )
+
+    def _abort_update(self, message: str, *, cancelled: bool = False) -> None:
+        if not self.checking_updates or self._update_error:
+            return
+        self._update_timer.stop()
+        self._update_error = message
+        self._update_cancelled = cancelled
+        self._queue.clear()
+        # Only feed checks are cancellable; installed packages are not changed.
+        # Keep ownership until QProcess reports that the child has stopped.
+        if self.process.state() != QProcess.NotRunning:
+            self.process.kill()
 
     def _load_state(self) -> None:
         try:
@@ -211,6 +243,8 @@ class OpkgBackend(QObject):
         self._results = {}
         self._queue = list(commands)
         self._transaction_ran = False
+        self._update_error = ""
+        self._update_cancelled = False
         if mode == "perform":
             self.last_result = {
                 "action": action,
@@ -231,9 +265,14 @@ class OpkgBackend(QObject):
         self.activityChanged.emit()
         self.logChanged.emit()
         self.resultChanged.emit()
+        if self.checking_updates:
+            self._update_timer.start()
         self._next()
 
     def _next(self) -> None:
+        if self._update_error:
+            self._complete_command(False, self._update_error)
+            return
         self._key, args = self._queue.pop(0)
         self._output = ""
         self._active = True
@@ -263,6 +302,9 @@ class OpkgBackend(QObject):
             "updates": 0.85,
         }.get(self._key, 0.0)
         self.activityChanged.emit()
+        if self._update_error:
+            self._complete_command(False, self._update_error)
+            return
         # No shell, user supplied switches, feed overrides or forced dependencies.
         self.process.start(
             str(self.kernel_feeds) if self._key == "kernel-feeds" else self.executable,
@@ -306,6 +348,9 @@ class OpkgBackend(QObject):
         if not self._active:
             return
         self._read()
+        if self._update_error:
+            self._complete_command(False, self._update_error)
+            return
         success = code == 0 and status == QProcess.NormalExit
         error = ""
         if status == QProcess.CrashExit:
@@ -379,6 +424,10 @@ class OpkgBackend(QObject):
 
     def _complete_command(self, success: bool, error: str) -> None:
         self._active = False
+        if self._update_error:
+            self._record_result(False, self._update_error)
+            self._finish()
+            return
         if self._key in {"plan", "verify"}:
             self._complete_plan(success, error)
             return
@@ -421,13 +470,18 @@ class OpkgBackend(QObject):
             message = f"{self._name} {verb[self._action]}."
         self.last_result.update(
             {
-                "state": "succeeded" if success else "failed",
+                "state": "cancelled"
+                if self._update_cancelled
+                else "succeeded"
+                if success
+                else "failed",
                 "message": message,
                 "finishedAt": int(time.time()),
                 "log": self.log,
             }
         )
         if self._action == "update":
+            self._update_timer.stop()
             if success:
                 self.freshness = {
                     "lastRefresh": int(time.time()),
@@ -460,7 +514,7 @@ class OpkgBackend(QObject):
 
     def _finish(self) -> None:
         reconciled = self._reconcile_restarts()
-        if not self.catalog_error:
+        if not self.catalog_error and not self._update_error:
             try:
                 catalog = read_catalog(self._results)
             except (ValueError, KeyError) as error:

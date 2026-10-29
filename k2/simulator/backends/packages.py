@@ -35,6 +35,8 @@ class SimulatedPackages(QObject):
         self.catalog_error = ""
         self.state_error = ""
         self.busy = False
+        self._checking_updates = False
+        self._operation_timer: QTimer | None = None
         self.status = "Loading packages"
         self.progress = 0.15
         self.log = "Simulator ready. Package changes stay in memory."
@@ -93,7 +95,33 @@ class SimulatedPackages(QObject):
             ]
         )
 
+    @property
+    def checking_updates(self) -> bool:
+        return self.busy and self._checking_updates
+
+    def cancel_update(self) -> None:
+        if not self.checking_updates:
+            return
+        if self._operation_timer is not None:
+            self._operation_timer.stop()
+            self._operation_timer.deleteLater()
+            self._operation_timer = None
+        self.busy = False
+        self.status = "Ready"
+        self.progress = 1.0
+        message = "Update check cancelled."
+        self.log += "\n" + message
+        self.freshness["error"] = message
+        self.last_result.update(
+            {"state": "cancelled", "message": message, "finishedAt": int(time.time())}
+        )
+        self.finished.emit(False, message)
+        self.activityChanged.emit()
+        self.logChanged.emit()
+        self.resultChanged.emit()
+
     def refresh(self) -> None:
+        self._checking_updates = False
         self.busy = True
         self.status = "Loading packages"
         self.activityChanged.emit()
@@ -147,6 +175,7 @@ class SimulatedPackages(QObject):
         if self.busy:
             raise ValueError("Wait for the current task to finish.")
         targets = self._targets(action, name)
+        self._checking_updates = False
         self.busy = True
         self.status = {
             "install": "Preparing installation",
@@ -173,6 +202,7 @@ class SimulatedPackages(QObject):
             raise ValueError("This package is required by k2")
         targets = [] if action == "update" else self._targets(action, name)
         before = self._installed_snapshot()
+        self._checking_updates = action == "update"
         self.busy = True
         self.status = {
             "install": f"Installing {name}",
@@ -195,7 +225,13 @@ class SimulatedPackages(QObject):
         self.logChanged.emit()
         self.resultChanged.emit()
 
+        timer = QTimer(self)
+        self._operation_timer = timer
+        timer.setSingleShot(True)
+
         def finish() -> None:
+            self._operation_timer = None
+            timer.deleteLater()
             self.busy = False
             success = self.scenario != "offline"
             if success:
@@ -244,7 +280,8 @@ class SimulatedPackages(QObject):
             self.logChanged.emit()
             self.resultChanged.emit()
 
-        QTimer.singleShot(700, finish)
+        timer.timeout.connect(finish)
+        timer.start(700)
 
     def _installed_snapshot(self) -> dict[str, InstalledPackage]:
         return {
