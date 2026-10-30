@@ -17,13 +17,14 @@
 #include <unistd.h>
 
 namespace {
-bool pageButtonDevice(int fd) {
+bool sessionButtonDevice(int fd, bool includePower) {
     unsigned char keys[(KEY_MAX + 8) / 8] = {};
     const auto hasKey = [&keys](unsigned key) {
         return keys[key / 8] & (1U << (key % 8));
     };
     return ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(keys)), keys) >= 0 &&
-        hasKey(193) && hasKey(194) && !hasKey(KEY_A);
+        ((hasKey(193) && hasKey(194)) || (includePower && hasKey(KEY_POWER))) &&
+        !hasKey(KEY_A);
 }
 
 int setGrab(int fd, bool grab) {
@@ -130,7 +131,9 @@ bool ControlBridge::lendButtons() {
     for (const auto &name : names) {
         bool numeric;
         const int fd = name.toInt(&numeric);
-        if (!numeric || !pageButtonDevice(fd))
+        // App-coordinated sleep needs the power button as well as page keys.
+        // Stock reader sessions keep Nickel's power-button ownership.
+        if (!numeric || !sessionButtonDevice(fd, !allowSleep))
             continue;
         const int held = fcntl(fd, F_DUPFD_CLOEXEC, 0);
         if (held < 0) {
@@ -139,7 +142,7 @@ bool ControlBridge::lendButtons() {
         }
         // A duplicate holds the same evdev client even if Nickel closes or
         // reuses its original descriptor while another app owns the display.
-        if (!pageButtonDevice(held)) {
+        if (!sessionButtonDevice(held, !allowSleep)) {
             close(held);
             continue;
         }

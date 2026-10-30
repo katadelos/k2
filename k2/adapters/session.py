@@ -115,6 +115,8 @@ class DisplaySession:
         if self.visible == visible:
             return
         if self.bridge is not None:
+            # Nickel lends its display and buttons and vetoes its own sleep UI.
+            # Raw HAL suspend can retain the app's framebuffer under this lease.
             if visible:
                 request(self.bridge, "begin", allowSleep=self.allow_sleep)
             else:
@@ -182,8 +184,6 @@ def main():
         help="retain app content while the app coordinates suspend through the HAL",
     )
     args, arguments = parser.parse_known_args()
-    if args.family == "kobo" and args.retain_display:
-        parser.error("app display retention is only supported on Kindle")
     if args.allow_sleep and args.retain_display:
         parser.error(
             "stock sleep screens and app display retention are mutually exclusive"
@@ -234,6 +234,7 @@ def supervise(
         K2_SESSION_DIR=directory,
         K2_ALLOW_SLEEP="1" if allow_sleep else "0",
         K2_RETAIN_DISPLAY="1" if retain_display else "0",
+        K2_STOCK_DISPLAY="nickel" if family == "kobo" else "",
     )
     control = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
     control.bind(str(Path(directory) / "control"))
@@ -302,7 +303,9 @@ def _wait_for_child(child, control, display, wake, family, allow_sleep, retain_d
         if control in readable:
             message = control.recv(128)
             if message in (b"active", b"inactive"):
-                active = family == "kobo" or message == b"active"
+                active = (
+                    family == "kobo" and not retain_display
+                ) or message == b"active"
                 next_renewal = 0
             elif retain_display and message in (b"retain", b"release"):
                 display.set_visible(message == b"retain")
