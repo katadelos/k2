@@ -13,6 +13,7 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <linux/input.h>
+#include <new>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -326,6 +327,19 @@ void ControlBridge::thaw() {
     frozen.clear();
 }
 
+QObject *ControlBridge::light() {
+    if (frontLight) return frontLight;
+    auto construct = symbol<void (*)(QObject *, QObject *)>("_ZN10FrontLightC1EP7QObject");
+    if (!construct) return nullptr;
+    // FrontLight is Nickel's QObject facade over its shared ChannelMixer. Its
+    // constructor only connects signals; the mixer retains the live LED state.
+    // As with MainNavButton, the firmware owns this opaque C++ object's layout.
+    auto *object = static_cast<QObject *>(::operator new(1024));
+    construct(object, this);
+    frontLight = object;
+    return object;
+}
+
 void ControlBridge::read() {
     auto *socket = qobject_cast<QLocalSocket *>(sender());
     if (!socket) return;
@@ -346,6 +360,47 @@ void ControlBridge::read() {
         } else if (command == QStringLiteral("end") && socket == owner) {
             release();
             result.insert(QStringLiteral("active"), false);
+        } else if (command == QStringLiteral("frontlight") || command == QStringLiteral("set_frontlight")) {
+            auto brightness = symbol<int (*)(QObject *)>("_ZNK10FrontLight10brightnessEv");
+            auto minimum = symbol<int (*)(QObject *)>("_ZNK10FrontLight13minBrightnessEv");
+            auto maximum = symbol<int (*)(QObject *)>("_ZNK10FrontLight13maxBrightnessEv");
+            auto setBrightness = symbol<void (*)(QObject *, int, int)>("_ZNK10FrontLight13setBrightnessEii");
+            auto cancel = symbol<void (*)(QObject *)>("_ZN10FrontLight24cancelBrightnessChangingEv");
+            auto *object = brightness && minimum && maximum && setBrightness && cancel ? light() : nullptr;
+            if (!object) {
+                result.insert(QStringLiteral("error"), QStringLiteral("Live frontlight control is unavailable on this firmware."));
+                result.insert(QStringLiteral("errno"), EOPNOTSUPP);
+            } else {
+                const int low = minimum(object), high = maximum(object);
+                int value = brightness(object);
+                if (low < 0 || high <= 0 || high > 100 || low > high || value < 0 || value > high) {
+                    result.insert(QStringLiteral("error"), QStringLiteral("The live frontlight range cannot be represented safely."));
+                    result.insert(QStringLiteral("errno"), ERANGE);
+                } else if (command == QStringLiteral("set_frontlight")) {
+                    const auto requested = request.value(QStringLiteral("brightness"));
+                    const int percent = requested.toInt(-1);
+                    if (!requested.isDouble() || requested.toDouble() != percent || percent < 0 || percent > 100) {
+                        result.insert(QStringLiteral("error"), QStringLiteral("Brightness must be a whole percentage."));
+                        result.insert(QStringLiteral("errno"), EINVAL);
+                    } else {
+                        const int target = percent ? qMax(low, (percent * high + 50) / 100) : 0;
+                        cancel(object);
+                        // Duration zero is synchronous; sleep must not race an animation.
+                        setBrightness(object, target, 0);
+                        value = brightness(object);
+                        if (value != target) {
+                            result.insert(QStringLiteral("error"), QStringLiteral("The native frontlight did not reach the requested level."));
+                            result.insert(QStringLiteral("errno"), EIO);
+                        }
+                    }
+                }
+                if (!result.contains(QStringLiteral("error"))) {
+                    result.insert(QStringLiteral("brightness"), (value * 100 + high / 2) / high);
+                    result.insert(QStringLiteral("level"), value);
+                    result.insert(QStringLiteral("minimum"), low);
+                    result.insert(QStringLiteral("maximum"), high);
+                }
+            }
         } else if (command == QStringLiteral("wifi") || command == QStringLiteral("set_wifi")) {
             auto *workflow = instance("_ZN23WirelessWorkflowManager14sharedInstanceEv");
             auto *wireless = instance("_ZN15WirelessManager14sharedInstanceEv");

@@ -2,6 +2,7 @@
 
 import argparse
 import ctypes
+import errno
 import fcntl
 import json
 import os
@@ -35,7 +36,7 @@ def request(connection, command, **values):
         data.extend(part)
     result = json.loads(data.split(b"\n", 1)[0])
     if result.get("error"):
-        raise OSError(result["error"])
+        raise OSError(result.get("errno", errno.EIO), result["error"])
     return result
 
 

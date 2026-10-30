@@ -1,6 +1,7 @@
 """Serialized access to the e-reader HAL shared by application workers."""
 
 import errno
+import os
 from dataclasses import asdict
 from threading import RLock
 from typing import TYPE_CHECKING
@@ -10,6 +11,40 @@ from ..core.ports import BatteryState, CapabilityState, LightState, WifiStatus
 if TYPE_CHECKING:
     from ereader_hal import Device as NativeDevice
     from ereader_hal import WifiConfig
+
+
+def open_device() -> NativeDevice:
+    """Open the HAL and lend stock light state when hardware has no readback."""
+    from ereader_hal import Capability, Device
+
+    device = Device()
+    try:
+        if os.environ.get("K2_STOCK_DISPLAY") == "nickel":
+            state = device.get_capability(Capability.BRIGHTNESS)
+            if (
+                state.supported
+                and not state.available
+                and state.error
+                in {
+                    errno.ENOENT,
+                    errno.ENODEV,
+                    errno.ENOSYS,
+                    errno.EOPNOTSUPP,
+                }
+            ):
+                from .session import native_request
+
+                def read() -> int:
+                    return native_request("frontlight")["brightness"]
+
+                def write(percent: int) -> None:
+                    native_request("set_frontlight", brightness=percent)
+
+                device.set_brightness_provider(read, write)
+        return device
+    except BaseException:
+        device.close()
+        raise
 
 
 class Hardware:
@@ -22,9 +57,7 @@ class Hardware:
         if self._hardware_closed:
             raise RuntimeError("Device is closed")
         if self._hardware is None:
-            from ereader_hal import Device
-
-            self._hardware = Device()
+            self._hardware = open_device()
         return self._hardware
 
     def close(self) -> None:

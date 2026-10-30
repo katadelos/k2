@@ -30,6 +30,7 @@ private:
     void activity();
     bool pauseDisplay();
     bool lendButtons();
+    QObject *light();
     void restoreButtons();
     void finish();
     void freeze(QWidget *widget);
@@ -37,6 +38,7 @@ private:
     QPointer<QLocalSocket> owner;
     QPointer<QLocalSocket> display;
     QPointer<QObject> powerWorkflow;
+    QPointer<QObject> frontLight;
     bool allowSleep = false;
     bool sleeping = false;
     QList<QPointer<QWidget>> frozen;
