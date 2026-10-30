@@ -36,18 +36,11 @@ export QT_QUICK_CONTROLS_STYLE=Default
 export XDG_CACHE_HOME="$store/cache"
 unset LD_LIBRARY_PATH
 
-if [ "$family" = kindle ]; then
-    if [ -S /tmp/.X11-unix/X0 ]; then
-        export DISPLAY=:0
-        export QT_QPA_PLATFORM=xcb
-    else
-        export QT_QPA_PLATFORM=ereader
-        export QT_QPA_FB_HIDECURSOR=1
-    fi
-    exec "$runtime/usr/bin/python3" -m k2.adapters.session kindle "$@"
+if [ -S /tmp/.X11-unix/X0 ]; then
+    export DISPLAY=:0
+    export QT_QPA_PLATFORM=xcb
+else
+    export QT_QPA_PLATFORM=ereader
+    export QT_QPA_FB_HIDECURSOR=1
 fi
-
-# The native bridge lends the display while Nickel keeps managing the radio.
-export QT_QPA_PLATFORM=kobo
-export QT_QPA_FB_HIDECURSOR=1
-exec "$runtime/usr/bin/python3" -m k2.adapters.session kobo "$@"
+exec "$runtime/usr/bin/python3" -m k2.adapters.session "$family" "$@"
