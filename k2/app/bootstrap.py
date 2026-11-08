@@ -96,6 +96,7 @@ def compose(
     directory = Path(__file__).parents[1] / "ui/shell"
     for name, title, qml in [
         ("home", "k2", "HomePage.qml"),
+        ("kppmods", "KPP Mods", "KppModsPage.qml"),
         ("about", "About k2", "AboutPage.qml"),
     ]:
         navigation.register(Route(name, title, str(directory / qml), shell))
