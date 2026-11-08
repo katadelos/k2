@@ -1,4 +1,4 @@
-"""Use the Kindle X server's grayscale visual and window-scoped refresh API."""
+"""Select a Qt raster visual for monochrome and color Kindle X displays."""
 
 import ctypes
 import os
@@ -29,6 +29,8 @@ def grayscale_visual():
     x11.XOpenDisplay.restype = ctypes.c_void_p
     x11.XDefaultScreen.argtypes = [ctypes.c_void_p]
     x11.XDefaultScreen.restype = ctypes.c_int
+    x11.XDefaultDepth.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    x11.XDefaultDepth.restype = ctypes.c_int
     x11.XMatchVisualInfo.argtypes = [
         ctypes.c_void_p,
         ctypes.c_int,
@@ -43,12 +45,18 @@ def grayscale_visual():
         raise RuntimeError("Cannot connect to the Kindle X display")
     try:
         visual = VisualInfo()
-        # StaticGray = 0. PseudoColor, the server's default, has no Qt raster
-        # paint engine; StaticGray supplies the native 8-bit intensity ramp.
+        screen = x11.XDefaultScreen(display)
+        depth = x11.XDefaultDepth(display, screen)
+        # 8-bit Kindles default to PseudoColor, which has no Qt raster paint
+        # engine; StaticGray (0) supplies their native intensity ramp.
+        # Colorsoft uses TrueColor (4) at the server's native color depth.
+        visual_class = 0 if depth == 8 else 4
         if not x11.XMatchVisualInfo(
-            display, x11.XDefaultScreen(display), 8, 0, ctypes.byref(visual)
+            display, screen, depth, visual_class, ctypes.byref(visual)
         ):
-            raise RuntimeError("The Kindle X display has no 8-bit grayscale visual")
+            raise RuntimeError(
+                f"The Kindle X display has no Qt raster visual at depth {depth}"
+            )
         return hex(visual.visualid)
     finally:
         x11.XCloseDisplay(display)

@@ -35,6 +35,9 @@ export QML_DISABLE_DISK_CACHE=1
 export QT_QUICK_CONTROLS_STYLE=Default
 export XDG_CACHE_HOME="$store/cache"
 unset LD_LIBRARY_PATH
+# Use the SDK C++ runtime before firmware preloads, and discard the stock
+# application's preload list when launched from KUAL.
+export LD_PRELOAD="$runtime/lib/libstdc++.so.6"
 
 if [ -S /tmp/.X11-unix/X0 ]; then
     export DISPLAY=:0
