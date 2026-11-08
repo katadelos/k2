@@ -14,7 +14,7 @@ uv run k2-sim --device elipsa --page koreader --scenario koreader-installed
 
 | Option | Values and behaviour |
 | --- | --- |
-| `--device` | `pw5` (default, 1236 × 1648) or `elipsa` (1404 × 1872) |
+| `--device` | `pw5` (default, 1236 × 1648), `k4` (600 × 800, D-pad navigation), or `elipsa` (1404 × 1872) |
 | `--page` | `home` (default), `apps`, `device`, `storage`, `files`, `about`, `activity`, `koreader`, `koreader-customise` |
 | `--scenario` | A scenario from the table below; default `normal` |
 | `--scale` | Window scale from 0.1 to 2; desktop mode fits the screen, headless mode defaults to 1 |
@@ -89,6 +89,7 @@ For example, send these commands to inspect a package and capture its page:
 | `feature-transport` | `value`: `usb`, `wifi`, or `both` |
 | `feature-action` | `action`: service action, such as `start` or `stop` |
 | `feature-refresh` | None |
+| `button` | `action`: `up`, `down`, `left`, `right`, `select`, `back`, `home`, `menu`, `keyboard`, `previous`, or `next`; use the `k4` profile |
 
 Wait until startup has finished (`loading` and `busy` are false), then select
 the package before requesting a change. Requests made while package work is

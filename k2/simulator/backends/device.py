@@ -40,7 +40,11 @@ class SimulatedDevice:
         self._customise_managers: dict[str, SimulatedCustomiseManager] = {}
 
     def capability(self, name: str) -> CapabilityState:
-        supported = name in {"brightness", "warmth", "wifi", "battery"}
+        supported = name in (
+            {"wifi", "battery"}
+            if self.profile == "k4"
+            else {"brightness", "warmth", "wifi", "battery"}
+        )
         return {
             "supported": supported,
             "implemented": supported,
@@ -300,7 +304,13 @@ class SimulatedDevice:
         return {
             "model": model,
             "family": family,
-            "firmware": "Simulated firmware",
+            "firmware": (
+                "4.1.4 (simulated)"
+                if self.profile == "k4"
+                else "5.19.5 (simulated)"
+                if family == "kindle"
+                else "Simulated firmware"
+            ),
             "kernel": "Simulated kernel",
             "architecture": "armv7l",
             "battery": "85%",
@@ -310,7 +320,11 @@ class SimulatedDevice:
             "store": store,
             "sdk": store + "/.eink-sdk",
             "feeds": [{"name": "Simulator", "url": "Local sample catalog"}],
-            "launcher": "k2 bottom rail button"
-            if family == "kobo"
-            else "k2 library scriptlet",
+            "launcher": (
+                "k2 bottom rail button"
+                if family == "kobo"
+                else "KUAL or SDK command"
+                if self.profile == "k4"
+                else "k2 library scriptlet"
+            ),
         }

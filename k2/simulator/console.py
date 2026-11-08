@@ -12,6 +12,7 @@ class Console(JsonConsole):
         if not isinstance(c, AppShell):
             raise TypeError("The simulator console requires an attached application")
         commands = {
+            "button": lambda r: runtime.keys.handleAction(r["action"]),
             "navigate": lambda r: c.navigation.navigate(r["page"]),
             "back": lambda r: c.back(),
             "retry": lambda r: c.packages.retry(),

@@ -79,7 +79,14 @@ def main():
     controller = create_simulated_app(
         packages, SimulatedDevice(args.device, args.scenario), args.page
     )
-    runtime = Runtime(app, controller, width, height, scale=scale)
+    runtime = Runtime(
+        app,
+        controller,
+        width,
+        height,
+        scale=scale,
+        button_navigation=args.device == "k4",
+    )
     try:
         if not runtime.load():
             return 1
