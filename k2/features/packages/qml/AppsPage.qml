@@ -28,6 +28,16 @@ ColumnLayout {
         searchField.focus = false; keyboardOpen = false
         return true
     }
+    function toggleKeyboard() {
+        if (keyboardOpen) dismissKeyboard()
+        else {
+            searchField.forceActiveFocus(Qt.TabFocusReason)
+            keyboardOpen = true
+        }
+    }
+    function turnPage(direction) {
+        if (!showingFeatured) viewModel.setAppPage(viewModel.appPage + direction)
+    }
     function dismissKeyboardAt(x, y) {
         if (!keyboardOpen) return
         var keyPoint = keyboard.mapFromItem(apps, x, y)
@@ -53,7 +63,7 @@ ColumnLayout {
                 font.family: Theme.bodyFont; font.pixelSize: Theme.bodySize
                 color: Theme.ink; selectByMouse: true; background: Item {}
                 onTextEdited: searchDebounce.restart()
-                onActiveFocusChanged: if (activeFocus) apps.keyboardOpen = true
+                onActiveFocusChanged: if (activeFocus && !buttonNavigation) apps.keyboardOpen = true
                 onAccepted: apps.dismissKeyboard()
                 Keys.onEscapePressed: apps.dismissKeyboard()
                 Accessible.name: "Search packages"

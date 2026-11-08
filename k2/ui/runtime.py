@@ -23,6 +23,7 @@ from PyQt5.QtQuick import QQuickWindow
 
 from ..core.ports import Signal
 from .appearance import Appearance
+from .button_navigation import ButtonNavigation
 
 
 class RuntimeDevice(Protocol):
@@ -76,6 +77,7 @@ class Runtime(QObject):
         family: str | None = None,
         model: str | None = None,
         settings_path: str | Path | None = None,
+        button_navigation: bool = False,
     ) -> None:
         super().__init__(app)
         self.app = app
@@ -92,6 +94,8 @@ class Runtime(QObject):
         self._display_page_changes = 0
         self.width, self.height = width, height
         self.device, self.scale = device, scale
+        self.button_navigation = button_navigation
+        self._keys = ButtonNavigation(button_navigation, self)
         if settings_path is None and device and controller is not None:
             # Device sessions supply an SDK-backed adapter; desktop controllers
             # only need the activity interface above.
@@ -145,6 +149,10 @@ class Runtime(QObject):
     def appearance(self) -> Appearance:
         return self._appearance
 
+    @pyqtProperty(QObject, constant=True)
+    def keys(self) -> ButtonNavigation:
+        return self._keys
+
     @pyqtSlot()
     def requestDisplayCleanup(self) -> None:
         """Clear panel history after startup or a palette/geometry change."""
@@ -182,6 +190,7 @@ class Runtime(QObject):
             return
         self._closed = True
         self.timer.stop()
+        self._keys.close()
         self._appearance.close()
         if self.controller is not None:
             self.controller.close()
@@ -213,6 +222,9 @@ class Runtime(QObject):
             "deviceFamily": self.family,
             "offscreenPreview": self.offscreen,
             "deviceMode": self.device,
+            "buttonNavigation": self.button_navigation,
+            "framebufferDisplay": self.device
+            and self.app.platformName() in {"ereader", "kobo"},
             "deferredStartup": self.controller is None,
             "appRuntime": self,
             "firstFramePresented": False,
@@ -239,6 +251,7 @@ class Runtime(QObject):
             self.keyboard_display.close()
         self.keyboard_display = keyboard_display
         self.engine = engine
+        self._keys.attach(self.window)
         self._presented = False
         self._display_page_changes = 0
         self.display_updates = keyboard_display.attach(self.window)

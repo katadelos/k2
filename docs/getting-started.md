@@ -4,8 +4,9 @@
 
 ## Before you install
 
-On Kindle, you need a jailbreak with Scriptlet support to run the installer
-from the library. On Kobo, you need a configured package manager and a root
+On touch Kindles, you need a jailbreak with Scriptlet support to run the installer
+from the library. Kindle 4 uses an existing SDK setup and KUAL or a root shell.
+On Kobo, you need a configured package manager and a root
 shell that can run `opkg`.
 
 The Kindle installer needs an internet connection. An existing package setup
@@ -18,6 +19,7 @@ as the hardware; packages from different profiles are not interchangeable.
 
 | Device profile | Target |
 | --- | --- |
+| `kindle5` | Kindle 4 and other ARM soft-float Kindle firmware with a 2.6 kernel |
 | `kindlepw2` | Kindle firmware with the ARM soft-float ABI and a kernel newer than 2.6 |
 | `kindlehf` | Kindle firmware with the ARM hard-float ABI |
 | `kobo` | Older Kobo firmware and kernel, including Kobo Touch |
@@ -43,6 +45,26 @@ The installer reuses an existing package setup or prepares one automatically.
 If installation stops, follow the message on screen and open **Install k2**
 again. It stays in the library until installation succeeds. Further details
 are saved in `k2-install.log` on USB storage.
+
+### Kindle 4
+
+Use the `kindle5` build with `qt5-kobo-platform`, the shared Qt framebuffer
+plugin. The configured feed must contain both packages. The framebuffer plugin
+is available in local feeds and build artifacts; it is not in the public feed.
+Open **k2 → Open k2** in KUAL, or run this command in a root shell:
+
+```sh
+sh /mnt/us/.eink-sdk/control/run k2
+```
+
+The D-pad moves the focus outline; Centre selects. Back closes a menu or returns
+to the previous page, Home opens k2's home screen, and Menu opens device controls.
+The page buttons turn package-list pages or scroll other pages. Select a text
+field or press Keyboard to open the on-screen keyboard; use the D-pad and Centre
+to enter text. Back closes it. KPP Mods is unavailable on Kindle 4.
+
+k2 takes over the framebuffer while open and restores the original Kindle
+interface when it exits.
 
 ## Install on Kobo
 

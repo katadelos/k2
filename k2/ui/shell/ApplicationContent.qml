@@ -7,6 +7,34 @@ Item {
     property var shell
     readonly property var appShell: shell
     readonly property bool applicationLoadFailed: pageLoader.status === Loader.Error
+    onVisibleChanged: if (visible && buttonNavigation) initialFocus.restart()
+    Timer {
+        id: initialFocus
+        interval: 0
+        onTriggered: appRuntime.keys.focusFirst(pageLoader.item)
+    }
+    Connections {
+        target: appRuntime.keys
+        function onRequested(action) {
+            if (action === "back") {
+                if (shell.confirmations.active || shell.controls.controlsOpen) shell.back()
+                else if (!pageLoader.item || !pageLoader.item.dismissKeyboard || !pageLoader.item.dismissKeyboard()) shell.back()
+                initialFocus.restart()
+            } else if (action === "home") {
+                if (shell.confirmations.active) shell.confirmations.cancel()
+                shell.controls.closeControls()
+                shell.navigation.navigate("home")
+            } else if (action === "menu") {
+                if (!shell.confirmations.active) shell.controls.toggleControls()
+            } else if (action === "keyboard") {
+                if (pageLoader.item && pageLoader.item.toggleKeyboard) pageLoader.item.toggleKeyboard()
+            } else if (action === "previous" || action === "next") {
+                var direction = action === "next" ? 1 : -1
+                if (pageLoader.item && pageLoader.item.turnPage) pageLoader.item.turnPage(direction)
+                else appRuntime.keys.scrollPage(direction)
+            }
+        }
+    }
     Shortcut {
         sequence: "Escape"
         enabled: content.enabled && !shell.packages.loading
@@ -44,7 +72,10 @@ Item {
                 id: pageLoader
                 Layout.fillWidth: true; Layout.fillHeight: true; Layout.minimumHeight: 0
                 enabled: !routeLoad.running
-                onLoaded: if (content.visible && !shell.packages.loading) appRuntime.displayPageChanged()
+                onLoaded: {
+                    if (content.visible && !shell.packages.loading) appRuntime.displayPageChanged()
+                    if (buttonNavigation) initialFocus.restart()
+                }
                 function loadRoute() {
                     setSource(shell.navigation.source, {shell: content.appShell, viewModel: shell.navigation.model})
                 }
@@ -61,6 +92,14 @@ Item {
                     function onRouteChanged() { routeLoad.restart() }
                 }
             }
+            KText {
+                visible: buttonNavigation && !(pageLoader.item && pageLoader.item.keyboardOpen)
+                Layout.fillWidth: true
+                text: "D-pad: move · Centre: select · Back · Menu: controls"
+                font.pixelSize: 12
+                color: Theme.secondary
+                horizontalAlignment: Text.AlignHCenter
+            }
         }
         DevicePopover { anchors.fill: parent; shell: content.appShell }
         TapHandler {
@@ -72,6 +111,7 @@ Item {
             }
         }
         Item {
+            Component.onCompleted: appRuntime.keys.registerScope(this, 40)
             visible: shell.confirmations.active
             onVisibleChanged: if (visible) cancelAction.forceActiveFocus()
             anchors.fill: parent
@@ -108,6 +148,17 @@ Item {
                     }
                 }
             }
+        }
+        Rectangle {
+            visible: buttonNavigation && appRuntime.keys.focusRect.width > 0
+            x: appRuntime.keys.focusRect.x / surface.scale
+            y: appRuntime.keys.focusRect.y / surface.scale
+            width: appRuntime.keys.focusRect.width / surface.scale
+            height: appRuntime.keys.focusRect.height / surface.scale
+            color: "transparent"
+            border.color: Theme.ink
+            border.width: 3
+            radius: 3
         }
     }
 }

@@ -3,6 +3,8 @@ import EBoard 1.0 as EBoard
 
 EBoard.Keyboard {
     property var theme: Theme
+    Component.onCompleted: appRuntime.keys.registerKeyboard(this)
+    onVisibleChanged: if (visible && buttonNavigation) selectionActive = true
     paper: theme.paper
     ink: theme.ink
     fontFamily: theme.bodyFont

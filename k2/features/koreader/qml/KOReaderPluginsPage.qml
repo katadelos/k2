@@ -15,6 +15,13 @@ ColumnLayout {
         sourceField.focus = false; keyboardOpen = false
         return true
     }
+    function toggleKeyboard() {
+        if (keyboardOpen) dismissKeyboard()
+        else if (adding) {
+            sourceField.forceActiveFocus(Qt.TabFocusReason)
+            keyboardOpen = true
+        }
+    }
     function dismissKeyboardAt(x, y) {
         if (!keyboardOpen) return
         var kp = keyboard.mapFromItem(page, x, y)

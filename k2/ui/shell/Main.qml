@@ -17,8 +17,8 @@ Window {
     width: panelWidth * windowScale; height: panelHeight * windowScale
     visible: true; color: Theme.paper
     title: deviceMode && deviceFamily === "kindle" ? "L:A_N:application_ID:org.k2_PC:" + (appRuntime.appearance.fullScreen ? "N" : "T") : appShell ? "k2 — " + appShell.controls.info.model + " simulator" : "k2"
-    flags: deviceMode && deviceFamily === "kobo" ? Qt.Window | Qt.FramelessWindowHint : Qt.Window
-    visibility: deviceMode && deviceFamily === "kobo" ? Window.FullScreen : Window.Windowed
+    flags: framebufferDisplay ? Qt.Window | Qt.FramelessWindowHint : Qt.Window
+    visibility: framebufferDisplay ? Window.FullScreen : Window.Windowed
     onClosing: {
         close.accepted = false
         if (appShell) appShell.quit()

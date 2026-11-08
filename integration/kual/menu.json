@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "name": "k2",
+      "items": [
+        { "name": "Open k2", "action": "./launch.sh" }
+      ]
+    }
+  ]
+}

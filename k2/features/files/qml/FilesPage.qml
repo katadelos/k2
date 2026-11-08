@@ -32,6 +32,11 @@ Item {
         actions.visible = false
         if (!editor && !shell.confirmations.active) viewModel.clearSelection()
     }
+    Timer {
+        id: focusMenu
+        interval: 0
+        onTriggered: appRuntime.keys.focusFirst(actions.visible ? actionContents : optionsContents)
+    }
 
     function showActions(path, item) {
         if (choosingFolder || viewModel.busy) return
@@ -54,6 +59,10 @@ Item {
         if (choosingFolder) { viewModel.cancelTransfer(); return true }
         if (viewModel.currentPath) { viewModel.up(); return true }
         return false
+    }
+    function toggleKeyboard() {
+        if (keyboardOpen) dismissKeyboard()
+        else if (editor) nameField.forceActiveFocus(Qt.TabFocusReason)
     }
 
     function editName(action) {
@@ -297,6 +306,8 @@ Item {
 
     Item {
         id: options; visible: false; anchors.fill: parent; z: 2
+        Component.onCompleted: appRuntime.keys.registerScope(this, 10)
+        onVisibleChanged: if (visible && buttonNavigation) focusMenu.restart()
         property real menuY: 0
         MouseArea { anchors.fill: parent; onClicked: options.visible = false }
         KSurface {
@@ -328,6 +339,8 @@ Item {
 
     Item {
         id: actions; visible: false; anchors.fill: parent; z: 3
+        Component.onCompleted: appRuntime.keys.registerScope(this, 20)
+        onVisibleChanged: if (visible && buttonNavigation) focusMenu.restart()
         property real menuX: 0
         property real anchorY: 0
         readonly property real menuWidth: Math.min(page.width, 310)

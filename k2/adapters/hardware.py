@@ -105,6 +105,11 @@ class Hardware:
         with self._hardware_lock:
             return self._hal().get_info().model
 
+    @property
+    def button_navigation(self) -> bool:
+        with self._hardware_lock:
+            return self._hal().get_info().features.dpad
+
     def _light(self, name: str) -> LightState:
         with self._hardware_lock:
             state = self.capability(name)

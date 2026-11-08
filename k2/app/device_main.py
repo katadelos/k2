@@ -42,8 +42,21 @@ def main() -> int:
         device=True,
         family=args.family,
         model=device.model,
+        button_navigation=device.button_navigation,
         settings_path=device.sdk / "etc/k2/ui.ini",
     )
+    buttons = None
+    if device.button_navigation:
+        from ..adapters.buttons import DeviceButtons
+
+        buttons = DeviceButtons(app)
+        buttons.action.connect(runtime.keys.handleAction)
+
+        def input_failed(error: str) -> None:
+            print(f"k2 input failed: {error}", file=sys.stderr)
+            app.exit(1)
+
+        buttons.failed.connect(input_failed)
 
     def start_application() -> None:
         if runtime.closed or runtime.controller is not None:
@@ -79,8 +92,12 @@ def main() -> int:
             return 1
         return app.exec_()
     finally:
-        runtime.close()
-        device.close()
+        try:
+            if buttons is not None:
+                buttons.close()
+        finally:
+            runtime.close()
+            device.close()
 
 
 if __name__ == "__main__":

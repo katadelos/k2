@@ -101,9 +101,13 @@ class Device(Hardware):
             "store": str(self.store),
             "sdk": str(self.sdk),
             "feeds": feeds,
-            "launcher": "k2 bottom rail button"
-            if self.family == "kobo"
-            else "k2 library scriptlet",
+            "launcher": (
+                "k2 bottom rail button"
+                if self.family == "kobo"
+                else "KUAL or SDK command"
+                if self.button_navigation
+                else "k2 library scriptlet"
+            ),
         }
 
 

@@ -4,8 +4,15 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 Item {
     property var shell
+    Component.onCompleted: appRuntime.keys.registerScope(this, 30)
     visible: shell.controls.controlsOpen && !shell.packages.loading
-    onVisibleChanged: if (visible) appRuntime.appearance.refresh()
+    onVisibleChanged: {
+        if (visible) {
+            appRuntime.appearance.refresh()
+            if (buttonNavigation) focusControls.restart()
+        }
+    }
+    Timer { id: focusControls; interval: 0; onTriggered: appRuntime.keys.focusFirst(contents) }
     MouseArea { anchors.fill: parent; onClicked: shell.controls.closeControls() }
     KSurface {
         anchors.right: parent.right; anchors.rightMargin: 24; y: 60
@@ -112,7 +119,7 @@ Item {
                     }
                 }
                 Item {
-                    visible: deviceFamily === "kindle"
+                    visible: deviceFamily === "kindle" && !framebufferDisplay
                     width: parent.width; height: 44
                     KIcon { name: "fullscreen"; x: 12; y: 11; width: 22; height: 22 }
                     TextMetrics { id: fullScreenCapital; font: fullScreenLabel.font; text: "H" }
