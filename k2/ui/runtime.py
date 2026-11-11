@@ -223,8 +223,7 @@ class Runtime(QObject):
             "offscreenPreview": self.offscreen,
             "deviceMode": self.device,
             "buttonNavigation": self.button_navigation,
-            "framebufferDisplay": self.device
-            and self.app.platformName() in {"ereader", "kobo"},
+            "framebufferDisplay": self.device and self.app.platformName() == "ereader",
             "deferredStartup": self.controller is None,
             "appRuntime": self,
             "firstFramePresented": False,

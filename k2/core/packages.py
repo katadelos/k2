@@ -153,7 +153,7 @@ PROTECTED = {
     "qt5declarative",
     "qt5quickcontrols2",
 }
-RESTART_PACKAGES = PROTECTED | {"qt5-kobo-platform", "fbink"}
+RESTART_PACKAGES = PROTECTED | {"qt5-ereader-platform", "fbink"}
 
 
 def is_kpp_package(name: str) -> bool:

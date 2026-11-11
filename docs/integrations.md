@@ -81,7 +81,7 @@ session and can use its shared UI runtime.
 
 Reading apps can use `k2 --allow-sleep --module package.module` to allow the
 original firmware to handle sleep. On Kobo, this requires matching `k2-nickel`
-and `qt5-kobo-platform` packages: they coordinate input, display updates, sleep,
+and `qt5-ereader-platform` packages: they coordinate input, display updates, sleep,
 and resume with Nickel. Use the normal session for tools that must remain awake.
 
 ### Service controls

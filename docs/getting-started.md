@@ -48,7 +48,7 @@ are saved in `k2-install.log` on USB storage.
 
 ### Kindle 4
 
-Use the `kindle5` build with `qt5-kobo-platform`, the shared Qt framebuffer
+Use the `kindle5` build with `qt5-ereader-platform`, the shared Qt framebuffer
 plugin. The configured feed must contain both packages. The framebuffer plugin
 is available in local feeds and build artifacts; it is not in the public feed.
 Open **k2 → Open k2** in KUAL, or run this command in a root shell:
