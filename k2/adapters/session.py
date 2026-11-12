@@ -246,6 +246,11 @@ def supervise(
     def stop(signum, frame):
         nonlocal stopping
         stopping = True
+        print(
+            f"k2: stopping {module} after {signal.Signals(signum).name}",
+            file=sys.stderr,
+            flush=True,
+        )
         if child is not None and child.poll() is None:
             child.terminate()
 
@@ -267,6 +272,7 @@ def supervise(
             child, control, display, wake, family, allow_sleep, retain_display
         )
         result = child.returncode
+        print(f"k2: {module} exited status={result}", file=sys.stderr, flush=True)
     finally:
         _terminate_child(child, timeout=75 if retain_display else 5)
         try:
