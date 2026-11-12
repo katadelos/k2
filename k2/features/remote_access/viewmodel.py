@@ -318,9 +318,7 @@ class RemoteAccessViewModel(QObject):
                 ready=True,
             )
         ssh_running = self._state.get("ssh")
-        usb_enabled = self._state.get("usbEnabled") or (
-            self.family == "kobo" and self._state.get("owned")
-        )
+        usb_enabled = self._state.get("usbEnabled") or self._state.get("owned")
         if ssh_running:
             title = "Stop SSH access?"
             label = "Stop SSH"
@@ -331,7 +329,7 @@ class RemoteAccessViewModel(QObject):
             body = "Release the network resources left by Supernet."
         if usb_enabled:
             if self.family == "kindle":
-                body += " USB network mode will stay enabled."
+                body += " USB file-transfer mode will be restored."
             else:
                 body += " Supernet’s USB network connection will also close."
         return ConfirmationContent(title=title, label=label, body=body, ready=True)
