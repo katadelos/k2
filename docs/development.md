@@ -114,7 +114,7 @@ The Nickel bridge uses the
 and [NickelTC](https://github.com/pgaskin/NickelTC). The Kindle shortcut follows
 the [Scriptlet specification](https://kindlemodding.org/kindle-dev/scriptlets.html).
 
-The interface uses ktrmnl2's KTRMNL DIN Mittelschrift for headings and controls,
+The interface uses ktrmnl's KTRMNL DIN Mittelschrift for headings and controls,
 and Neue Haas Display Roman for body text. Bundled fonts retain their respective
 licenses. The Featured KOReader icon is unmodified; its
 [attribution and license](../feed/featured/images/koreader.LICENSE.txt) accompany
